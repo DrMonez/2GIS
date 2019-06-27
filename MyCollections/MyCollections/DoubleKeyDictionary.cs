@@ -51,12 +51,12 @@ namespace MyCollections
                             else treeNode = treeNode.Right;
                         else
                             if (treeNode.Left == null)
-                        {
-                            node.Parent = treeNode;
-                            treeNode.Left = node;
-                            break;
-                        }
-                        else treeNode = treeNode.Left;
+                            {
+                                node.Parent = treeNode;
+                                treeNode.Left = node;
+                                break;
+                            }
+                            else treeNode = treeNode.Left;
                     }
                 }
             }
@@ -142,9 +142,7 @@ namespace MyCollections
                     var nameNode = Search(idNode.Index, treeName);
 
                     if (nameNode == null) return;
-
-                    // нужен обход дерева
-                    // чтобы уменьшить индексы последующих элементов
+                    
                     elements.RemoveAt(idNode.Index);
                     ReduceIndex(treeId, idNode.Index);
                     ReduceIndex(treeName, idNode.Index);
@@ -171,9 +169,7 @@ namespace MyCollections
                     var idNode = Search(nameNode.Index, treeId);
 
                     if (idNode == null) return;
-
-                    // нужен обход дерева
-                    // чтобы уменьшить индексы последующих элементов
+                    
                     elements.RemoveAt(idNode.Index);
                     ReduceIndex(treeId, idNode.Index);
                     ReduceIndex(treeName, idNode.Index);
