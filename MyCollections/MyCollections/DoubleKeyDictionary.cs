@@ -1,24 +1,25 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private TreeNode<TKeyId> treeId;
-        private TreeNode<TKeyName> treeName;
-        private List<TValue> elements;
+        private Dictionary<TKeyId, TKeyName> id;
+        private Dictionary<TKeyName, TKeyId> names;
+        private Hashtable values;
 
 
-        public int Count => elements.Count;
+        public int Count => values.Count;
 
         public bool Add(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            if (Search(elem.Item1, treeId) == null && Search(elem.Item2, treeName) == null)
+            if (!id.ContainsKey(elem.Item1) && !names.ContainsKey(elem.Item2))
             {
-                elements.Add(elem.Item3);
-                AddToTree(elem.Item1, ref treeId);
-                AddToTree(elem.Item2, ref treeName);
+                values.Add((elem.Item1, elem.Item2), elem.Item3);
+                id.Add(elem.Item1, elem.Item2);
+                names.Add(elem.Item2, elem.Item1);
             }
             else return false;
             return true;
@@ -29,208 +30,81 @@ namespace MyCollections
             return Add(new Tuple<TKeyId, TKeyName, TValue>(id, name, value));
         }
 
-        private void AddToTree<T>(T key, ref TreeNode<T> tree)
-        {
-            lock (this)
-            {
-                if (elements.Count == 1)
-                    tree = new TreeNode<T>(new Tuple<T, int>(key, elements.Count - 1));
-                else
-                {
-                    var treeNode = tree;
-                    var node = new TreeNode<T>(new Tuple<T, int>(key, elements.Count - 1));
-                    while (true)
-                    {
-                        if (Comparer<T>.Default.Compare(treeNode.Id, node.Id) <= 0)
-                            if (treeNode.Right == null)
-                            {
-                                node.Parent = treeNode;
-                                treeNode.Right = node;
-                                break;
-                            }
-                            else treeNode = treeNode.Right;
-                        else
-                            if (treeNode.Left == null)
-                            {
-                                node.Parent = treeNode;
-                                treeNode.Left = node;
-                                break;
-                            }
-                            else treeNode = treeNode.Left;
-                    }
-                }
-            }
-        }
-
-        public Tuple<TKeyId, TValue> GetById(TKeyId id)
-        {
-            var node = Search(id, treeId);
-            if (node != null)
-                return new Tuple<TKeyId, TValue>(id, elements[node.Index]);
-            return null;
-        }
-
-        public Tuple<TKeyName, TValue> GetByName(TKeyName name)
-        {
-            var node = Search(name, treeName);
-            if (node != null)
-                return new Tuple<TKeyName, TValue>(name, elements[node.Index]);
-            return null;
-        }
-
-        private TreeNode<T> Search<T>(T key, TreeNode<T> tree)
-        {
-            if (elements.Count == 0) return null;
-            
-            var treeNode = tree;
-            while (true)
-            {
-                var compareResult = Comparer<T>.Default.Compare(key, treeNode.Id);
-                if (compareResult == 0)
-                    return treeNode;
-                if (compareResult > 0)
-                    if (treeNode.Right == null)
-                        return null;
-                    else treeNode = treeNode.Right;
-                if (compareResult < 0)
-                    if (treeNode.Left == null)
-                        return null;
-                    else treeNode = treeNode.Left;
-            }
-        }
-
-        private TreeNode<T> Search<T>(int index, TreeNode<T> tree)
-        {
-            if (elements.Count == 0) return null;
-
-            var queue = new Queue<TreeNode<T>>();
-            queue.Enqueue(tree);
-            while (queue.Count != 0)
-            {
-                var tmp = queue.Dequeue();
-                if (int.Equals(index, tmp.Index)) return tmp;
-                if (tmp.Left != null) queue.Enqueue(tmp.Left);
-                if (tmp.Right != null) queue.Enqueue(tmp.Right);
-            }
-            return null;
-        }
-
         public void Clear()
         {
-            lock (this)
-            {
-                treeId = null;
-                treeName = null;
-                elements.Clear();
-            }
+            id.Clear();
+            names.Clear();
+            values.Clear();
         }
 
         public void Remove(TKeyId id)
         {
-            lock (this)
+            TKeyName name;
+            if(this.id.TryGetValue(id, out name))
             {
-                if(elements.Count == 1)
-                {
-                    elements.Clear();
-                    treeId = null;
-                    treeName = null;
-                    return;
-                }
-                var idNode = Search(id, treeId);
-                if (idNode != null)
-                {
-                    var nameNode = Search(idNode.Index, treeName);
-
-                    if (nameNode == null) return;
-                    
-                    elements.RemoveAt(idNode.Index);
-                    ReduceIndex(treeId, idNode.Index);
-                    ReduceIndex(treeName, idNode.Index);
-                    RemoveFromTree(idNode);
-                    RemoveFromTree(nameNode);
-                }
+                values.Remove((id, name));
+                this.id.Remove(id);
+                names.Remove(name);
             }
         }
 
         public void Remove(TKeyName name)
         {
-            lock (this)
+            TKeyId id;
+            if (names.TryGetValue(name, out id))
             {
-                if (elements.Count == 1)
-                {
-                    elements.Clear();
-                    treeId = null;
-                    treeName = null;
-                    return;
-                }
-                var nameNode = Search(name, treeName);
-                if (nameNode != null)
-                {
-                    var idNode = Search(nameNode.Index, treeId);
-
-                    if (idNode == null) return;
-                    
-                    elements.RemoveAt(idNode.Index);
-                    ReduceIndex(treeId, idNode.Index);
-                    ReduceIndex(treeName, idNode.Index);
-                    RemoveFromTree(idNode);
-                    RemoveFromTree(nameNode);
-                }
+                values.Remove((id, name));
+                this.id.Remove(id);
+                names.Remove(name);
             }
         }
-
-        private void ReduceIndex<T>(TreeNode<T> tree, int startIndex)
+        
+        public Tuple<TKeyName, TValue> GetById(TKeyId id)
         {
-            var queue = new Queue<TreeNode<T>>();
-            queue.Enqueue(tree);
-            while(queue.Count != 0)
-            {
-                var tmp = queue.Dequeue();
-                if (tmp.Index > startIndex) tmp.Index--;
-                if (tmp.Left != null) queue.Enqueue(tmp.Left);
-                if (tmp.Right != null) queue.Enqueue(tmp.Right);
-            }
+            TKeyName name;
+            if (this.id.TryGetValue(id, out name))
+                return new Tuple<TKeyName, TValue>(name, (TValue)values[(id, name)]);
+            else return null;
         }
 
-        private void RemoveFromTree<T>(TreeNode<T> tree)
+        public Tuple<TKeyId, TValue> GetByName(TKeyName name)
         {
-            var parentNode = tree.Parent;
-            var leftNode = tree.Left;
-            var rightNode = tree.Right;
-
-            if (parentNode.Left != null && parentNode.Left.Equals(tree))
-                parentNode.Left = leftNode == null ? rightNode : leftNode;
-            else parentNode.Right = leftNode == null ? rightNode : leftNode;
-
-            if (leftNode != null || rightNode != null)
-            {
-                var rightChild = leftNode == null ? rightNode : leftNode;
-                while (rightChild.Right != null)
-                    rightChild = rightChild.Right;
-                rightChild.Right = rightNode;
-            }
+            TKeyId id;
+            if (this.names.TryGetValue(name, out id))
+                return new Tuple<TKeyId, TValue>(id, (TValue)values[(id, name)]);
+            else return null;
         }
 
         #region constructors
         public DoubleKeyDictionary()
         {
-            elements = new List<TValue>();
+            //elements = new List<TValue>();
+
+            values = new Hashtable();
+            id = new Dictionary<TKeyId, TKeyName>();
+            names = new Dictionary<TKeyName, TKeyId>();
         }
 
         public DoubleKeyDictionary(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            elements = new List<TValue>();
-            elements.Add(elem.Item3);
-            treeId = new TreeNode<TKeyId>(new Tuple<TKeyId, int>(elem.Item1, 0));
-            treeName = new TreeNode<TKeyName>(new Tuple<TKeyName, int>(elem.Item2, 0));
+            values = new Hashtable();
+            id = new Dictionary<TKeyId, TKeyName>();
+            names = new Dictionary<TKeyName, TKeyId>();
+            
+            id.Add(elem.Item1, elem.Item2);
+            names.Add(elem.Item2, elem.Item1);
+            values.Add((elem.Item1, elem.Item2), elem.Item3);
         }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            elements = new List<TValue>();
-            elements.Add(value);
-            treeId = new TreeNode<TKeyId>(new Tuple<TKeyId, int>(id, 0));
-            treeName = new TreeNode<TKeyName>(new Tuple<TKeyName, int>(name, 0));
+            this.values = new Hashtable();
+            this.id = new Dictionary<TKeyId, TKeyName>();
+            names = new Dictionary<TKeyName, TKeyId>();
+            
+            this.id.Add(id, name);
+            names.Add(name, id);
+            values.Add((id, name), value);
         }
         #endregion
 

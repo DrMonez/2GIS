@@ -20,7 +20,7 @@ namespace TestMyCollections
         {
             var a = new DoubleKeyDictionary<int, string, double>();
             a.Add(new Tuple<int, string, double>(0, "0", 0.5));
-            var expected = new Tuple<int, double>(0, 0.5);
+            var expected = new Tuple<string, double>("0", 0.5);
             var actual = a.GetById(0);
             Assert.AreEqual(expected, actual);
         }
@@ -30,7 +30,7 @@ namespace TestMyCollections
         {
             var a = new DoubleKeyDictionary<int, string, double>();
             a.Add(new Tuple<int, string, double>(0, "0", 0.5));
-            var expected = new Tuple<string, double>("0", 0.5);
+            var expected = new Tuple<int, double>(0, 0.5);
             var actual = a.GetByName("0");
             Assert.AreEqual(expected, actual);
         }
@@ -88,19 +88,19 @@ namespace TestMyCollections
             var actualCount = a.Count;
             Assert.AreEqual(expectedCount, actualCount);
 
-            var elem = a.GetById(0);
+            var elem = a.GetByName("0");
             Assert.AreEqual(new Tuple<int, double>(0, 0.5), elem);
 
-            elem = a.GetById(1);
+            elem = a.GetByName("1");
             Assert.AreEqual(null, elem);
 
-            elem = a.GetById(2);
+            elem = a.GetByName("2");
             Assert.AreEqual(new Tuple<int, double>(2, 0.7), elem);
 
-            elem = a.GetById(3);
+            elem = a.GetByName("3");
             Assert.AreEqual(new Tuple<int, double>(3, 0.8), elem);
 
-            elem = a.GetById(4);
+            elem = a.GetByName("4");
             Assert.AreEqual(new Tuple<int, double>(4, 0.9), elem);
         }
 
@@ -120,19 +120,19 @@ namespace TestMyCollections
             var actualCount = a.Count;
             Assert.AreEqual(expectedCount, actualCount);
 
-            var elem = a.GetById(0);
+            var elem = a.GetByName("0");
             Assert.AreEqual(new Tuple<int, double>(0, 0.5), elem);
 
-            elem = a.GetById(1);
+            elem = a.GetByName("1");
             Assert.AreEqual(null, elem);
 
-            elem = a.GetById(2);
+            elem = a.GetByName("2");
             Assert.AreEqual(new Tuple<int, double>(2, 0.6), elem);
 
-            elem = a.GetById(3);
+            elem = a.GetByName("3");
             Assert.AreEqual(new Tuple<int, double>(3, 0.8), elem);
 
-            elem = a.GetById(4);
+            elem = a.GetByName("4");
             Assert.AreEqual(new Tuple<int, double>(4, 0.9), elem);
         }
 
@@ -152,20 +152,37 @@ namespace TestMyCollections
             var actualCount = a.Count;
             Assert.AreEqual(expectedCount, actualCount);
 
-            var elem = a.GetById(0);
+            var elem = a.GetByName("0");
             Assert.AreEqual(new Tuple<int, double>(0, 0.5), elem);
 
-            elem = a.GetById(1);
+            elem = a.GetByName("1");
             Assert.AreEqual(new Tuple<int, double>(1, 0.7), elem);
 
-            elem = a.GetById(2);
+            elem = a.GetByName("2");
             Assert.AreEqual(new Tuple<int, double>(2, 0.6), elem);
 
-            elem = a.GetById(3);
+            elem = a.GetByName("3");
             Assert.AreEqual(new Tuple<int, double>(3, 0.8), elem);
 
-            elem = a.GetById(4);
+            elem = a.GetByName("4");
             Assert.AreEqual(null, elem);
+        }
+
+        [TestMethod]
+        public void BigSearchTest()
+        {
+            var a = new DoubleKeyDictionary<int, string, double>();
+
+            for (var i = 0; i < 10e6; i++)
+                a.Add(i, i.ToString(), i * 0.0001);
+            
+            var expectedCount = 10e6;
+            var actualCount = a.Count;
+            Assert.AreEqual(expectedCount, actualCount);
+
+            var elem = a.GetByName("0");
+            Assert.AreEqual(new Tuple<int, double>(0, 0), elem);
+
         }
     }
 }
