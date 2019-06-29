@@ -28,7 +28,7 @@ namespace Example
         { 
             var dictionary = new DoubleKeyDictionary<UserType, int, double>();
             for (var i = 0; i < 10; i++)
-                dictionary.Add(new Tuple<UserType, int, double>(new UserType(i.ToString()), i, Math.Pow(-1, i) * i));
+                dictionary.TryAdd(new Tuple<UserType, int, double>(new UserType(i.ToString()), i, Math.Pow(-1, i) * i));
             var third = dictionary.GetById(new UserType("3"));
             Console.WriteLine(third.ToString());
             Console.ReadLine();
