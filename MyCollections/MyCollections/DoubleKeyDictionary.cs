@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private Dictionary<TKeyId, TKeyName> identifiers;
-        private Dictionary<TKeyName, TKeyId> names;
-        private Hashtable values;
-        private object locker = new object();
+        private Dictionary<int, List<TKeyName>> idCollection;
+        private Dictionary<int, List<TKeyId>> namesCollection;
+        private Dictionary<int, TValue> valuesCollection;
 
-        public int Count => values.Count;
+        public int Count => valuesCollection.Count;
+
+        public TValue this[TKeyId id, TKeyName name] => valuesCollection[(id, name).GetHashCode()];
 
         public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
@@ -20,133 +23,116 @@ namespace MyCollections
 
         public bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            lock (locker)
+            if (!valuesCollection.ContainsKey((elem.Item1, elem.Item2).GetHashCode()))
             {
-                if (!ContainsDoubleKey(elem.Item1, elem.Item2))
-                {
-                    values.Add((elem.Item1, elem.Item2), elem.Item3);
-                    identifiers.Add(elem.Item1, elem.Item2);
-                    names.Add(elem.Item2, elem.Item1);
-                }
-                else return false;
-                return true;
-            }
-        }
+                valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
 
-        private bool ContainsDoubleKey(TKeyId id, TKeyName name)
-        {
-            return this.identifiers.ContainsKey(id) || names.ContainsKey(name);
+                if (idCollection.ContainsKey(elem.Item1.GetHashCode()))
+                {
+                    var tmp = idCollection[elem.Item1.GetHashCode()];
+                    tmp.Add(elem.Item2);
+                    idCollection[elem.Item1.GetHashCode()] = tmp;
+                }
+                else idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
+
+                if (namesCollection.ContainsKey(elem.Item2.GetHashCode()))
+                {
+                    var tmp = namesCollection[elem.Item2.GetHashCode()];
+                    tmp.Add(elem.Item1);
+                    namesCollection[elem.Item2.GetHashCode()] = tmp;
+                }
+                else namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
+            }
+            else return false;
+            return true;
         }
 
         public void Clear()
         {
-            lock (locker)
+            idCollection.Clear();
+            namesCollection.Clear();
+            valuesCollection.Clear();
+        }
+
+        public void Remove(TKeyId id, TKeyName name)
+        {
+            if (valuesCollection.ContainsKey((id, name).GetHashCode()))
             {
-                identifiers.Clear();
-                names.Clear();
-                values.Clear();
+                valuesCollection.Remove((id, name).GetHashCode());
+
+                var namesId = idCollection[id.GetHashCode()];
+                namesId.Remove(name);
+                if (namesId.Count != 0)
+                    idCollection[id.GetHashCode()] = namesId;
+                else idCollection.Remove(id.GetHashCode());
+
+                var idNames = namesCollection[name.GetHashCode()];
+                idNames.Remove(id);
+                if (idNames.Count != 0)
+                    namesCollection[name.GetHashCode()] = idNames;
+                else namesCollection.Remove(name.GetHashCode());
             }
         }
 
-        public void Remove(TKeyId id)
+        public Tuple<TKeyName, TValue>[] GetById(TKeyId id)
         {
-            TKeyName name;
-            lock (locker)
+            List<TKeyName> name;
+            if (idCollection.TryGetValue(id.GetHashCode(), out name))
             {
-                if (this.identifiers.TryGetValue(id, out name))
+                var res = new List<Tuple<TKeyName, TValue>>();
+                foreach (var x in name)
                 {
-                    values.Remove((id, name));
-                    this.identifiers.Remove(id);
-                    names.Remove(name);
+                    res.Add(new Tuple<TKeyName, TValue>(x, valuesCollection[(id, x).GetHashCode()]));
                 }
+                return res.ToArray();
             }
-        }
-
-        public void Remove(TKeyName name)
-        {
-            TKeyId id;
-            lock (locker)
-            {
-                if (names.TryGetValue(name, out id))
-                {
-                    values.Remove((id, name));
-                    this.identifiers.Remove(id);
-                    names.Remove(name);
-                }
-            }
-        }
-        
-        public Tuple<TKeyName, TValue> GetById(TKeyId id)
-        {
-            TKeyName name;
-            if (this.identifiers.TryGetValue(id, out name))
-                return new Tuple<TKeyName, TValue>(name, (TValue)values[(id, name)]);
             else return null;
         }
 
-        public Tuple<TKeyId, TValue> GetByName(TKeyName name)
+        public Tuple<TKeyId, TValue>[] GetByName(TKeyName name)
         {
-            TKeyId id;
-            if (this.names.TryGetValue(name, out id))
-                return new Tuple<TKeyId, TValue>(id, (TValue)values[(id, name)]);
+            List<TKeyId> id;
+            if (namesCollection.TryGetValue(name.GetHashCode(), out id))
+            {
+                var res = new List<Tuple<TKeyId, TValue>>();
+                foreach (var x in id)
+                {
+                    res.Add(new Tuple<TKeyId, TValue>(x, valuesCollection[(x, name).GetHashCode()]));
+                }
+                return res.ToArray();
+            }
             else return null;
         }
 
         #region constructors
         public DoubleKeyDictionary()
         {
-            //elements = new List<TValue>();
-
-            values = new Hashtable();
-            identifiers = new Dictionary<TKeyId, TKeyName>();
-            names = new Dictionary<TKeyName, TKeyId>();
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
         }
 
         public DoubleKeyDictionary(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            values = new Hashtable();
-            identifiers = new Dictionary<TKeyId, TKeyName>();
-            names = new Dictionary<TKeyName, TKeyId>();
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
             
-            identifiers.Add(elem.Item1, elem.Item2);
-            names.Add(elem.Item2, elem.Item1);
-            values.Add((elem.Item1, elem.Item2), elem.Item3);
+            idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
+            namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
+            valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
         }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            this.values = new Hashtable();
-            this.identifiers = new Dictionary<TKeyId, TKeyName>();
-            names = new Dictionary<TKeyName, TKeyId>();
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
             
-            this.identifiers.Add(id, name);
-            names.Add(name, id);
-            values.Add((id, name), value);
+            idCollection.Add(id.GetHashCode(), new List<TKeyName>() { name });
+            namesCollection.Add(name.GetHashCode(), new List<TKeyId>() { id });
+            valuesCollection.Add((id, name).GetHashCode(), value);
         }
         #endregion
-
-        class TreeNode<TKey>
-        {
-            private readonly TKey id;
-            private int index;
-
-            public TKey Id => id;
-            public int Index
-            {
-                get { return index; }
-                set { index = value; }
-            }
-
-            public TreeNode<TKey> Left;
-            public TreeNode<TKey> Right;
-            public TreeNode<TKey> Parent;
-
-
-            public TreeNode(Tuple<TKey, int> elem)
-            {
-                id = elem.Item1;
-                index = elem.Item2;
-            }
-        }
     }
 }
