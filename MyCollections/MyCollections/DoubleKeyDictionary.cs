@@ -8,13 +8,13 @@ namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private Dictionary<int, List<TKeyName>> idCollection;
-        private Dictionary<int, List<TKeyId>> namesCollection;
-        private Dictionary<int, TValue> valuesCollection;
+        private Dictionary<TKeyId, List<TKeyName>> idCollection;
+        private Dictionary<TKeyName, List<TKeyId>> namesCollection;
+        private Dictionary<(TKeyId, TKeyName), TValue> valuesCollection;
 
         public int Count => valuesCollection.Count;
 
-        public TValue this[TKeyId id, TKeyName name] => valuesCollection[(id, name).GetHashCode()];
+        public TValue this[TKeyId id, TKeyName name] => valuesCollection[(id, name)];
 
         public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
@@ -23,25 +23,25 @@ namespace MyCollections
 
         public bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            if (!valuesCollection.ContainsKey((elem.Item1, elem.Item2).GetHashCode()))
+            if (!valuesCollection.ContainsKey((elem.Item1, elem.Item2)))
             {
-                valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
+                valuesCollection.Add((elem.Item1, elem.Item2), elem.Item3);
 
-                if (idCollection.ContainsKey(elem.Item1.GetHashCode()))
+                if (idCollection.ContainsKey(elem.Item1))
                 {
-                    var tmp = idCollection[elem.Item1.GetHashCode()];
+                    var tmp = idCollection[elem.Item1];
                     tmp.Add(elem.Item2);
-                    idCollection[elem.Item1.GetHashCode()] = tmp;
+                    idCollection[elem.Item1] = tmp;
                 }
-                else idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
+                else idCollection.Add(elem.Item1, new List<TKeyName>() { elem.Item2 });
 
-                if (namesCollection.ContainsKey(elem.Item2.GetHashCode()))
+                if (namesCollection.ContainsKey(elem.Item2))
                 {
-                    var tmp = namesCollection[elem.Item2.GetHashCode()];
+                    var tmp = namesCollection[elem.Item2];
                     tmp.Add(elem.Item1);
-                    namesCollection[elem.Item2.GetHashCode()] = tmp;
+                    namesCollection[elem.Item2] = tmp;
                 }
-                else namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
+                else namesCollection.Add(elem.Item2, new List<TKeyId>() { elem.Item1 });
             }
             else return false;
             return true;
@@ -56,33 +56,33 @@ namespace MyCollections
 
         public void Remove(TKeyId id, TKeyName name)
         {
-            if (valuesCollection.ContainsKey((id, name).GetHashCode()))
+            if (valuesCollection.ContainsKey((id, name)))
             {
-                valuesCollection.Remove((id, name).GetHashCode());
+                valuesCollection.Remove((id, name));
 
-                var namesId = idCollection[id.GetHashCode()];
+                var namesId = idCollection[id];
                 namesId.Remove(name);
                 if (namesId.Count != 0)
-                    idCollection[id.GetHashCode()] = namesId;
-                else idCollection.Remove(id.GetHashCode());
+                    idCollection[id] = namesId;
+                else idCollection.Remove(id);
 
-                var idNames = namesCollection[name.GetHashCode()];
+                var idNames = namesCollection[name];
                 idNames.Remove(id);
                 if (idNames.Count != 0)
-                    namesCollection[name.GetHashCode()] = idNames;
-                else namesCollection.Remove(name.GetHashCode());
+                    namesCollection[name] = idNames;
+                else namesCollection.Remove(name);
             }
         }
 
         public Tuple<TKeyName, TValue>[] GetById(TKeyId id)
         {
             List<TKeyName> name;
-            if (idCollection.TryGetValue(id.GetHashCode(), out name))
+            if (idCollection.TryGetValue(id, out name))
             {
                 var res = new List<Tuple<TKeyName, TValue>>();
                 foreach (var x in name)
                 {
-                    res.Add(new Tuple<TKeyName, TValue>(x, valuesCollection[(id, x).GetHashCode()]));
+                    res.Add(new Tuple<TKeyName, TValue>(x, valuesCollection[(id, x)]));
                 }
                 return res.ToArray();
             }
@@ -92,12 +92,12 @@ namespace MyCollections
         public Tuple<TKeyId, TValue>[] GetByName(TKeyName name)
         {
             List<TKeyId> id;
-            if (namesCollection.TryGetValue(name.GetHashCode(), out id))
+            if (namesCollection.TryGetValue(name, out id))
             {
                 var res = new List<Tuple<TKeyId, TValue>>();
                 foreach (var x in id)
                 {
-                    res.Add(new Tuple<TKeyId, TValue>(x, valuesCollection[(x, name).GetHashCode()]));
+                    res.Add(new Tuple<TKeyId, TValue>(x, valuesCollection[(x, name)]));
                 }
                 return res.ToArray();
             }
@@ -107,31 +107,31 @@ namespace MyCollections
         #region constructors
         public DoubleKeyDictionary()
         {
-            valuesCollection = new Dictionary<int, TValue>();
-            idCollection = new Dictionary<int, List<TKeyName>>();
-            namesCollection = new Dictionary<int, List<TKeyId>>();
+            valuesCollection = new Dictionary<(TKeyId, TKeyName), TValue>();
+            idCollection = new Dictionary<TKeyId, List<TKeyName>>();
+            namesCollection = new Dictionary<TKeyName, List<TKeyId>>();
         }
 
         public DoubleKeyDictionary(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            valuesCollection = new Dictionary<int, TValue>();
-            idCollection = new Dictionary<int, List<TKeyName>>();
-            namesCollection = new Dictionary<int, List<TKeyId>>();
+            valuesCollection = new Dictionary<(TKeyId, TKeyName), TValue>();
+            idCollection = new Dictionary<TKeyId, List<TKeyName>>();
+            namesCollection = new Dictionary<TKeyName, List<TKeyId>>();
             
-            idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
-            namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
-            valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
+            idCollection.Add(elem.Item1, new List<TKeyName>() { elem.Item2 });
+            namesCollection.Add(elem.Item2, new List<TKeyId>() { elem.Item1 });
+            valuesCollection.Add((elem.Item1, elem.Item2), elem.Item3);
         }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            valuesCollection = new Dictionary<int, TValue>();
-            idCollection = new Dictionary<int, List<TKeyName>>();
-            namesCollection = new Dictionary<int, List<TKeyId>>();
+            valuesCollection = new Dictionary<(TKeyId, TKeyName), TValue>();
+            idCollection = new Dictionary<TKeyId, List<TKeyName>>();
+            namesCollection = new Dictionary<TKeyName, List<TKeyId>>();
             
-            idCollection.Add(id.GetHashCode(), new List<TKeyName>() { name });
-            namesCollection.Add(name.GetHashCode(), new List<TKeyId>() { id });
-            valuesCollection.Add((id, name).GetHashCode(), value);
+            idCollection.Add(id, new List<TKeyName>() { name });
+            namesCollection.Add(name, new List<TKeyId>() { id });
+            valuesCollection.Add((id, name), value);
         }
         #endregion
     }
