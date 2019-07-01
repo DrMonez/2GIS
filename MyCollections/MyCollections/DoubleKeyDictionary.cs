@@ -1,261 +1,138 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private TreeNode<TKeyId> treeId;
-        private TreeNode<TKeyName> treeName;
-        private List<TValue> elements;
+        private Dictionary<int, List<TKeyName>> idCollection;
+        private Dictionary<int, List<TKeyId>> namesCollection;
+        private Dictionary<int, TValue> valuesCollection;
 
+        public int Count => valuesCollection.Count;
 
-        public int Count => elements.Count;
+        public TValue this[TKeyId id, TKeyName name] => valuesCollection[(id, name).GetHashCode()];
 
-        public bool Add(Tuple<TKeyId, TKeyName, TValue> elem)
+        public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
-            if (Search(elem.Item1, treeId) == null && Search(elem.Item2, treeName) == null)
+            return TryAdd(new Tuple<TKeyId, TKeyName, TValue>(id, name, value));
+        }
+
+        public bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem)
+        {
+            if (!valuesCollection.ContainsKey((elem.Item1, elem.Item2).GetHashCode()))
             {
-                elements.Add(elem.Item3);
-                AddToTree(elem.Item1, ref treeId);
-                AddToTree(elem.Item2, ref treeName);
+                valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
+
+                if (idCollection.ContainsKey(elem.Item1.GetHashCode()))
+                {
+                    var tmp = idCollection[elem.Item1.GetHashCode()];
+                    tmp.Add(elem.Item2);
+                    idCollection[elem.Item1.GetHashCode()] = tmp;
+                }
+                else idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
+
+                if (namesCollection.ContainsKey(elem.Item2.GetHashCode()))
+                {
+                    var tmp = namesCollection[elem.Item2.GetHashCode()];
+                    tmp.Add(elem.Item1);
+                    namesCollection[elem.Item2.GetHashCode()] = tmp;
+                }
+                else namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
             }
             else return false;
             return true;
         }
 
-        public bool Add(TKeyId id, TKeyName name, TValue value)
-        {
-            return Add(new Tuple<TKeyId, TKeyName, TValue>(id, name, value));
-        }
-
-        private void AddToTree<T>(T key, ref TreeNode<T> tree)
-        {
-            lock (this)
-            {
-                if (elements.Count == 1)
-                    tree = new TreeNode<T>(new Tuple<T, int>(key, elements.Count - 1));
-                else
-                {
-                    var treeNode = tree;
-                    var node = new TreeNode<T>(new Tuple<T, int>(key, elements.Count - 1));
-                    while (true)
-                    {
-                        if (Comparer<T>.Default.Compare(treeNode.Id, node.Id) <= 0)
-                            if (treeNode.Right == null)
-                            {
-                                node.Parent = treeNode;
-                                treeNode.Right = node;
-                                break;
-                            }
-                            else treeNode = treeNode.Right;
-                        else
-                            if (treeNode.Left == null)
-                            {
-                                node.Parent = treeNode;
-                                treeNode.Left = node;
-                                break;
-                            }
-                            else treeNode = treeNode.Left;
-                    }
-                }
-            }
-        }
-
-        public Tuple<TKeyId, TValue> GetById(TKeyId id)
-        {
-            var node = Search(id, treeId);
-            if (node != null)
-                return new Tuple<TKeyId, TValue>(id, elements[node.Index]);
-            return null;
-        }
-
-        public Tuple<TKeyName, TValue> GetByName(TKeyName name)
-        {
-            var node = Search(name, treeName);
-            if (node != null)
-                return new Tuple<TKeyName, TValue>(name, elements[node.Index]);
-            return null;
-        }
-
-        private TreeNode<T> Search<T>(T key, TreeNode<T> tree)
-        {
-            if (elements.Count == 0) return null;
-            
-            var treeNode = tree;
-            while (true)
-            {
-                var compareResult = Comparer<T>.Default.Compare(key, treeNode.Id);
-                if (compareResult == 0)
-                    return treeNode;
-                if (compareResult > 0)
-                    if (treeNode.Right == null)
-                        return null;
-                    else treeNode = treeNode.Right;
-                if (compareResult < 0)
-                    if (treeNode.Left == null)
-                        return null;
-                    else treeNode = treeNode.Left;
-            }
-        }
-
-        private TreeNode<T> Search<T>(int index, TreeNode<T> tree)
-        {
-            if (elements.Count == 0) return null;
-
-            var queue = new Queue<TreeNode<T>>();
-            queue.Enqueue(tree);
-            while (queue.Count != 0)
-            {
-                var tmp = queue.Dequeue();
-                if (int.Equals(index, tmp.Index)) return tmp;
-                if (tmp.Left != null) queue.Enqueue(tmp.Left);
-                if (tmp.Right != null) queue.Enqueue(tmp.Right);
-            }
-            return null;
-        }
-
         public void Clear()
         {
-            lock (this)
+            idCollection.Clear();
+            namesCollection.Clear();
+            valuesCollection.Clear();
+        }
+
+        public void Remove(TKeyId id, TKeyName name)
+        {
+            if (valuesCollection.ContainsKey((id, name).GetHashCode()))
             {
-                treeId = null;
-                treeName = null;
-                elements.Clear();
+                valuesCollection.Remove((id, name).GetHashCode());
+
+                var namesId = idCollection[id.GetHashCode()];
+                namesId.Remove(name);
+                if (namesId.Count != 0)
+                    idCollection[id.GetHashCode()] = namesId;
+                else idCollection.Remove(id.GetHashCode());
+
+                var idNames = namesCollection[name.GetHashCode()];
+                idNames.Remove(id);
+                if (idNames.Count != 0)
+                    namesCollection[name.GetHashCode()] = idNames;
+                else namesCollection.Remove(name.GetHashCode());
             }
         }
 
-        public void Remove(TKeyId id)
+        public Tuple<TKeyName, TValue>[] GetById(TKeyId id)
         {
-            lock (this)
+            List<TKeyName> name;
+            if (idCollection.TryGetValue(id.GetHashCode(), out name))
             {
-                if(elements.Count == 1)
+                var res = new List<Tuple<TKeyName, TValue>>();
+                foreach (var x in name)
                 {
-                    elements.Clear();
-                    treeId = null;
-                    treeName = null;
-                    return;
+                    res.Add(new Tuple<TKeyName, TValue>(x, valuesCollection[(id, x).GetHashCode()]));
                 }
-                var idNode = Search(id, treeId);
-                if (idNode != null)
-                {
-                    var nameNode = Search(idNode.Index, treeName);
-
-                    if (nameNode == null) return;
-                    
-                    elements.RemoveAt(idNode.Index);
-                    ReduceIndex(treeId, idNode.Index);
-                    ReduceIndex(treeName, idNode.Index);
-                    RemoveFromTree(idNode);
-                    RemoveFromTree(nameNode);
-                }
+                return res.ToArray();
             }
+            else return null;
         }
 
-        public void Remove(TKeyName name)
+        public Tuple<TKeyId, TValue>[] GetByName(TKeyName name)
         {
-            lock (this)
+            List<TKeyId> id;
+            if (namesCollection.TryGetValue(name.GetHashCode(), out id))
             {
-                if (elements.Count == 1)
+                var res = new List<Tuple<TKeyId, TValue>>();
+                foreach (var x in id)
                 {
-                    elements.Clear();
-                    treeId = null;
-                    treeName = null;
-                    return;
+                    res.Add(new Tuple<TKeyId, TValue>(x, valuesCollection[(x, name).GetHashCode()]));
                 }
-                var nameNode = Search(name, treeName);
-                if (nameNode != null)
-                {
-                    var idNode = Search(nameNode.Index, treeId);
-
-                    if (idNode == null) return;
-                    
-                    elements.RemoveAt(idNode.Index);
-                    ReduceIndex(treeId, idNode.Index);
-                    ReduceIndex(treeName, idNode.Index);
-                    RemoveFromTree(idNode);
-                    RemoveFromTree(nameNode);
-                }
+                return res.ToArray();
             }
-        }
-
-        private void ReduceIndex<T>(TreeNode<T> tree, int startIndex)
-        {
-            var queue = new Queue<TreeNode<T>>();
-            queue.Enqueue(tree);
-            while(queue.Count != 0)
-            {
-                var tmp = queue.Dequeue();
-                if (tmp.Index > startIndex) tmp.Index--;
-                if (tmp.Left != null) queue.Enqueue(tmp.Left);
-                if (tmp.Right != null) queue.Enqueue(tmp.Right);
-            }
-        }
-
-        private void RemoveFromTree<T>(TreeNode<T> tree)
-        {
-            var parentNode = tree.Parent;
-            var leftNode = tree.Left;
-            var rightNode = tree.Right;
-
-            if (parentNode.Left != null && parentNode.Left.Equals(tree))
-                parentNode.Left = leftNode == null ? rightNode : leftNode;
-            else parentNode.Right = leftNode == null ? rightNode : leftNode;
-
-            if (leftNode != null || rightNode != null)
-            {
-                var rightChild = leftNode == null ? rightNode : leftNode;
-                while (rightChild.Right != null)
-                    rightChild = rightChild.Right;
-                rightChild.Right = rightNode;
-            }
+            else return null;
         }
 
         #region constructors
         public DoubleKeyDictionary()
         {
-            elements = new List<TValue>();
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
         }
 
         public DoubleKeyDictionary(Tuple<TKeyId, TKeyName, TValue> elem)
         {
-            elements = new List<TValue>();
-            elements.Add(elem.Item3);
-            treeId = new TreeNode<TKeyId>(new Tuple<TKeyId, int>(elem.Item1, 0));
-            treeName = new TreeNode<TKeyName>(new Tuple<TKeyName, int>(elem.Item2, 0));
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
+            
+            idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
+            namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
+            valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
         }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            elements = new List<TValue>();
-            elements.Add(value);
-            treeId = new TreeNode<TKeyId>(new Tuple<TKeyId, int>(id, 0));
-            treeName = new TreeNode<TKeyName>(new Tuple<TKeyName, int>(name, 0));
+            valuesCollection = new Dictionary<int, TValue>();
+            idCollection = new Dictionary<int, List<TKeyName>>();
+            namesCollection = new Dictionary<int, List<TKeyId>>();
+            
+            idCollection.Add(id.GetHashCode(), new List<TKeyName>() { name });
+            namesCollection.Add(name.GetHashCode(), new List<TKeyId>() { id });
+            valuesCollection.Add((id, name).GetHashCode(), value);
         }
         #endregion
-
-        class TreeNode<TKey>
-        {
-            private readonly TKey id;
-            private int index;
-
-            public TKey Id => id;
-            public int Index
-            {
-                get { return index; }
-                set { index = value; }
-            }
-
-            public TreeNode<TKey> Left;
-            public TreeNode<TKey> Right;
-            public TreeNode<TKey> Parent;
-
-
-            public TreeNode(Tuple<TKey, int> elem)
-            {
-                id = elem.Item1;
-                index = elem.Item2;
-            }
-        }
     }
 }
