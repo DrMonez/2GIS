@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MyCollections;
@@ -195,6 +196,18 @@ namespace TestMyCollections
             elem = a.GetByName("4");
             Assert.AreEqual(1, elem.Length);
             Assert.AreEqual(new Tuple<int, double>(4, 0.9), elem[0]);
+        }
+
+        [TestMethod]
+        public void Test()
+        {
+            var a = new Dictionary<string, int>();
+            a.Add("one", 1);
+            
+
+            var expected = 0;
+            var actual = a.Count;
+            Assert.AreEqual(expected, actual);
         }
     }
 

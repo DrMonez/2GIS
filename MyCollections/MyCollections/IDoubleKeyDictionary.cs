@@ -1,14 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MyCollections
 {
     interface IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         int Count { get; }
-        Tuple<TKeyName, TValue>[] GetById(TKeyId id);
-        Tuple<TKeyId, TValue>[] GetByName(TKeyName name);
+        Dictionary<TKeyName,TValue> GetById(TKeyId id);
+        Dictionary<TKeyId, TValue> GetByName(TKeyName name);
         bool TryAdd(TKeyId id, TKeyName name, TValue value);
-        bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem);
         void Remove(TKeyId id, TKeyName name);
         void Clear();
     }
