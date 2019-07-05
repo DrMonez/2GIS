@@ -10,49 +10,36 @@ namespace MyCollections
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         private Keys<TKeyId, TKeyName> keys;
-        private Dictionary<long, TValue> valuesCollection;
+        private Dictionary<long, TValue> values;
         ObjectIDGenerator idGenerator = new ObjectIDGenerator(); 
 
-        public int Count => valuesCollection.Count;
+        public int Count => values.Count;
 
-        public TValue this[TKeyId id, TKeyName name] => valuesCollection[(id, name).GetHashCode()];
+        public TValue this[TKeyId id, TKeyName name]
+        {
+            get
+            {
+                bool isFirst;
+                var key = idGenerator.GetId((id, name), out isFirst);
+                if(!isFirst) return values[key];
+                throw new KeyNotFoundException();
+            }
+        }
 
         public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
-            return TryAdd(new Tuple<TKeyId, TKeyName, TValue>(id, name, value));
-        }
-
-        public bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem)
-        {
-            //if (!valuesCollection.ContainsKey((elem.Item1, elem.Item2).GetHashCode()))
-            //{
-            //    valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
-
-            //    if (idCollection.ContainsKey(elem.Item1.GetHashCode()))
-            //    {
-            //        var tmp = idCollection[elem.Item1.GetHashCode()];
-            //        tmp.Add(elem.Item2);
-            //        idCollection[elem.Item1.GetHashCode()] = tmp;
-            //    }
-            //    else idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
-
-            //    if (namesCollection.ContainsKey(elem.Item2.GetHashCode()))
-            //    {
-            //        var tmp = namesCollection[elem.Item2.GetHashCode()];
-            //        tmp.Add(elem.Item1);
-            //        namesCollection[elem.Item2.GetHashCode()] = tmp;
-            //    }
-            //    else namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
-            //}
-            //else return false;
+            bool isFirst;
+            var mainId = idGenerator.GetId((id, name), out isFirst);
+            if (!isFirst) return false;
+            if (!keys.TryAdd(id, name)) return false;
+            values.Add(mainId, value);
             return true;
         }
 
         public void Clear()
         {
-            //idCollection.Clear();
-            //namesCollection.Clear();
-            //valuesCollection.Clear();
+            keys.Clear();
+            values.Clear();
         }
 
         public void Remove(TKeyId id, TKeyName name)
@@ -93,8 +80,9 @@ namespace MyCollections
                 foreach (var x in id)
                 {
                     bool isFirst;
-                    var currentId = idGenerator.GetId((key, x), out isFirst);
-                    if(!isFirst) res.Add(x, valuesCollection[currentId]);
+                    var mainKey = typeof(T2) == typeof(TKeyId) ? (object)(key, x) : (object)(x, key);
+                    var currentId = idGenerator.GetId(mainKey, out isFirst);
+                    if(!isFirst) res.Add(x, values[currentId]);
                 }
             return res;
         }
@@ -102,28 +90,15 @@ namespace MyCollections
         #region constructors
         public DoubleKeyDictionary()
         {
-            valuesCollection = new Dictionary<long, TValue>();
+            values = new Dictionary<long, TValue>();
             keys = new Keys<TKeyId, TKeyName>();
-        }
-
-        public DoubleKeyDictionary(Tuple<TKeyId, TKeyName, TValue> elem)
-        {
-            valuesCollection = new Dictionary<long, TValue>();
-            keys = new Keys<TKeyId, TKeyName>();
-
-            //idCollection.Add(elem.Item1.GetHashCode(), new List<TKeyName>() { elem.Item2 });
-            //namesCollection.Add(elem.Item2.GetHashCode(), new List<TKeyId>() { elem.Item1 });
-            valuesCollection.Add((elem.Item1, elem.Item2).GetHashCode(), elem.Item3);
         }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            valuesCollection = new Dictionary<long, TValue>();
-            keys = new Keys<TKeyId, TKeyName>();
-
-            //idCollection.Add(id.GetHashCode(), new List<TKeyName>() { name });
-            //namesCollection.Add(name.GetHashCode(), new List<TKeyId>() { id });
-            valuesCollection.Add((id, name).GetHashCode(), value);
+            values = new Dictionary<long, TValue>();
+            keys = new Keys<TKeyId, TKeyName>(id, name);
+            values.Add((id, name).GetHashCode(), value);
         }
         #endregion
     }
@@ -131,8 +106,9 @@ namespace MyCollections
 
     public sealed class Keys<TKeyId, TKeyName>
     {
-        private Dictionary<TKeyId, List<TKeyName>> idCollection;
-        private Dictionary<TKeyName, List<TKeyId>> namesCollection;
+        private Dictionary<long, List<TKeyName>> idCollection = new Dictionary<long, List<TKeyName>>();
+        private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
+        ObjectIDGenerator idGenerator = new ObjectIDGenerator();
 
         public bool TryGetValue<TKey, TValue>(TKey key, out List<TValue> value)
         {
@@ -155,12 +131,34 @@ namespace MyCollections
             }
         }
 
-        public Guid this[TKeyId keyId, TKeyName keyName]
+        public bool TryAdd(TKeyId id, TKeyName name)
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            return true;
+        }
+
+        public void Clear()
+        {
+
+        }
+
+        public Keys(TKeyId id, TKeyName name)
+        {
+            idCollection = new Dictionary<long, List<TKeyName>>();
+            namesCollection = new Dictionary<long, List<TKeyId>>();
+
+            bool isFirstId;
+            var keyId = idGenerator.GetId(id, out isFirstId);
+            bool isFirstName;
+            var keyName = idGenerator.GetId(name, out isFirstName);
+
+            idCollection.Add(keyId, new List<TKeyName>() { name });
+            namesCollection.Add(keyName, new List<TKeyId>() { id });
+        }
+
+        public Keys()
+        {
+            idCollection = new Dictionary<long, List<TKeyName>>();
+            namesCollection = new Dictionary<long, List<TKeyId>>();
         }
     }
 }
