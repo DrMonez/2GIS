@@ -44,22 +44,13 @@ namespace MyCollections
 
         public void Remove(TKeyId id, TKeyName name)
         {
-            //if (valuesCollection.ContainsKey((id, name).GetHashCode()))
-            //{
-            //    valuesCollection.Remove((id, name).GetHashCode());
-
-            //    var namesId = idCollection[id.GetHashCode()];
-            //    namesId.Remove(name);
-            //    if (namesId.Count != 0)
-            //        idCollection[id.GetHashCode()] = namesId;
-            //    else idCollection.Remove(id.GetHashCode());
-
-            //    var idNames = namesCollection[name.GetHashCode()];
-            //    idNames.Remove(id);
-            //    if (idNames.Count != 0)
-            //        namesCollection[name.GetHashCode()] = idNames;
-            //    else namesCollection.Remove(name.GetHashCode());
-            //}
+            bool isFirst;
+            var key = idGenerator.GetId((id, name), out isFirst);
+            if(!isFirst)
+            {
+                values.Remove(key);
+                keys.Remove(id, name);
+            }
         }
 
         public Dictionary<TKeyName, TValue> GetById(TKeyId id)
@@ -115,19 +106,25 @@ namespace MyCollections
             throw new NotImplementedException();
         }
 
-        public TKeyId this[TKeyName keyName]
+        public List<TKeyId> this[TKeyName keyName]
         {
             get
             {
-                throw new NotImplementedException();
+                bool isFirst;
+                var key = idGenerator.GetId(keyName, out isFirst);
+                if (isFirst) throw new KeyNotFoundException();
+                return namesCollection[key];
             }
         }
 
-        public TKeyName this[TKeyId keyId]
+        public List<TKeyName> this[TKeyId keyId]
         {
             get
             {
-                throw new NotImplementedException();
+                bool isFirst;
+                var key = idGenerator.GetId(keyId, out isFirst);
+                if (isFirst) throw new KeyNotFoundException();
+                return idCollection[key];
             }
         }
 
@@ -137,6 +134,11 @@ namespace MyCollections
         }
 
         public void Clear()
+        {
+
+        }
+
+        public void Remove(TKeyId id, TKeyName name)
         {
 
         }
