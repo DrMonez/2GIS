@@ -95,7 +95,7 @@ namespace MyCollections
     }
     
 
-    public sealed class Keys<TKeyId, TKeyName>
+    public sealed class Keys<TKeyId, TKeyName> 
     {
         private Dictionary<long, List<TKeyName>> idCollection = new Dictionary<long, List<TKeyName>>();
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
@@ -106,36 +106,29 @@ namespace MyCollections
             throw new NotImplementedException();
         }
 
-        public List<TKeyId> this[TKeyName keyName]
-        {
-            get
-            {
-                bool isFirst;
-                var key = idGenerator.GetId(keyName, out isFirst);
-                if (isFirst) throw new KeyNotFoundException();
-                return namesCollection[key];
-            }
-        }
-
-        public List<TKeyName> this[TKeyId keyId]
-        {
-            get
-            {
-                bool isFirst;
-                var key = idGenerator.GetId(keyId, out isFirst);
-                if (isFirst) throw new KeyNotFoundException();
-                return idCollection[key];
-            }
-        }
-
         public bool TryAdd(TKeyId id, TKeyName name)
         {
+            bool isFirstId;
+            var keyId = idGenerator.GetId(id, out isFirstId);
+            bool isFirstName;
+            var keyName = idGenerator.GetId(name, out isFirstName);
+
+            if (!isFirstId || !isFirstName) return false;
+
+            var tmpId = idCollection[keyId];
+            tmpId.Add(name);
+            idCollection[keyId] = tmpId;
+
+            var tmpName = namesCollection[keyName];
+            tmpName.Add(id);
+            namesCollection[keyName] = tmpName;
             return true;
         }
 
         public void Clear()
         {
-
+            idCollection.Clear();
+            namesCollection.Clear();
         }
 
         public void Remove(TKeyId id, TKeyName name)
@@ -157,10 +150,6 @@ namespace MyCollections
             namesCollection.Add(keyName, new List<TKeyId>() { id });
         }
 
-        public Keys()
-        {
-            idCollection = new Dictionary<long, List<TKeyName>>();
-            namesCollection = new Dictionary<long, List<TKeyId>>();
-        }
+        public Keys() { }
     }
 }
