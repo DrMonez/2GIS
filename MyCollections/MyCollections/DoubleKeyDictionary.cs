@@ -49,7 +49,7 @@ namespace MyCollections
             if(!isFirst)
             {
                 values.Remove(key);
-                keys.Remove(id, name);
+                keys.TryRemove(id, name);
             }
         }
 
@@ -145,37 +145,22 @@ namespace MyCollections
             namesCollection.Clear();
         }
 
-        public void Remove(TKeyId id, TKeyName name)
+        public void TryRemove(TKeyId id, TKeyName name)
         {
-            bool isFirstId;
-            var keyId = idGenerator.GetId(id, out isFirstId);
-            if (isFirstId) throw new KeyNotFoundException();
-
-            bool isFirstName;
-            var keyName = idGenerator.GetId(name, out isFirstName);
-            if (isFirstName) throw new KeyNotFoundException();
-
-            var tmpId = idCollection[keyId];
-            if(!tmpId.Contains(name)) throw new KeyNotFoundException();
-            tmpId.Remove(name);
-            idCollection[keyId] = tmpId;
-
-            var tmpName = namesCollection[keyName];
-            if (!tmpName.Contains(id)) throw new KeyNotFoundException();
-            tmpName.Remove(id);
-            namesCollection[keyName] = tmpName;
+            Remove(id, name, idCollection);
+            Remove(name, id, namesCollection);
         }
 
-        private void Remove<T>(T key)
+        private void Remove<T1, T2>(T1 key, T2 value, Dictionary<long, List<T2>> dictionary)
         {
             bool isFirstId;
             var mainKey = idGenerator.GetId(key, out isFirstId);
             if (isFirstId) throw new KeyNotFoundException();
 
-            var tmpId = typeof(T) == typeof(TKeyId) ? idCollection[mainKey] : namesCollection[mainKey];
-            if (!tmpId.Contains(key)) throw new KeyNotFoundException();
-            tmpId.Remove(key);
-            idCollection[mainKey] = tmpId;
+            var tmpId = dictionary[mainKey];
+            if (!tmpId.Contains(value)) throw new KeyNotFoundException();
+            tmpId.Remove(value);
+            dictionary[mainKey] = tmpId;
         }
 
         public Keys(TKeyId id, TKeyName name)
