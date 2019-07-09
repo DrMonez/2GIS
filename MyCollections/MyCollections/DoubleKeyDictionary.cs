@@ -89,7 +89,10 @@ namespace MyCollections
         {
             values = new Dictionary<long, TValue>();
             keys = new Keys<TKeyId, TKeyName>(id, name);
-            values.Add((id, name).GetHashCode(), value);
+
+            bool isFirst;
+            var key = idGenerator.GetId((id, name), out isFirst);
+            values.Add(key, value);
         }
         #endregion
     }
@@ -144,7 +147,35 @@ namespace MyCollections
 
         public void Remove(TKeyId id, TKeyName name)
         {
+            bool isFirstId;
+            var keyId = idGenerator.GetId(id, out isFirstId);
+            if (isFirstId) throw new KeyNotFoundException();
 
+            bool isFirstName;
+            var keyName = idGenerator.GetId(name, out isFirstName);
+            if (isFirstName) throw new KeyNotFoundException();
+
+            var tmpId = idCollection[keyId];
+            if(!tmpId.Contains(name)) throw new KeyNotFoundException();
+            tmpId.Remove(name);
+            idCollection[keyId] = tmpId;
+
+            var tmpName = namesCollection[keyName];
+            if (!tmpName.Contains(id)) throw new KeyNotFoundException();
+            tmpName.Remove(id);
+            namesCollection[keyName] = tmpName;
+        }
+
+        private void Remove<T>(T key)
+        {
+            bool isFirstId;
+            var mainKey = idGenerator.GetId(key, out isFirstId);
+            if (isFirstId) throw new KeyNotFoundException();
+
+            var tmpId = typeof(T) == typeof(TKeyId) ? idCollection[mainKey] : namesCollection[mainKey];
+            if (!tmpId.Contains(key)) throw new KeyNotFoundException();
+            tmpId.Remove(key);
+            idCollection[mainKey] = tmpId;
         }
 
         public Keys(TKeyId id, TKeyName name)
