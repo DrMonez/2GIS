@@ -101,9 +101,20 @@ namespace MyCollections
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
         ObjectIDGenerator idGenerator = new ObjectIDGenerator();
 
-        public bool TryGetValue<TKey, TValue>(TKey key, out List<TValue> value)
+        public bool TryGetValue<T1,T2>(T1 key, out List<T2> value)
         {
-            throw new NotImplementedException();
+            bool isFirst;
+            var mainKey = idGenerator.GetId(key, out isFirst);
+            if(isFirst)
+            {
+                value = new List<T2>();
+                return false;
+            }
+            if (typeof(T1) == typeof(TKeyId))
+                value = idCollection[mainKey] as List<T2>;
+            else
+                value = namesCollection[mainKey] as List<T2>;
+            return true;
         }
 
         public bool TryAdd(TKeyId id, TKeyName name)
