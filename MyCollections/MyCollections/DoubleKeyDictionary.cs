@@ -11,7 +11,7 @@ namespace MyCollections
     {
         private Keys<TKeyId, TKeyName> keys;
         private Dictionary<long, TValue> values;
-        ObjectIDGenerator idGenerator = new ObjectIDGenerator(); 
+        IDGenerator idGenerator = new IDGenerator(); 
 
         public int Count => values.Count;
 
@@ -102,7 +102,7 @@ namespace MyCollections
     {
         private Dictionary<long, List<TKeyName>> idCollection = new Dictionary<long, List<TKeyName>>();
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
-        ObjectIDGenerator idGenerator = new ObjectIDGenerator();
+        IDGenerator idGenerator = new IDGenerator();
 
         public bool TryGetValue<T1,T2>(T1 key, out List<T2> value)
         {
@@ -122,20 +122,22 @@ namespace MyCollections
 
         public bool TryAdd(TKeyId id, TKeyName name)
         {
-            bool isFirstId;
-            var keyId = idGenerator.GetId(id, out isFirstId);
-            bool isFirstName;
-            var keyName = idGenerator.GetId(name, out isFirstName);
+            var isAddId = TryAdd(id, name, idCollection);
+            var isAddName = TryAdd(name, id, namesCollection);
+            return true;
+        }
 
-            if (!isFirstId || !isFirstName) return false;
-
-            var tmpId = idCollection[keyId];
-            tmpId.Add(name);
-            idCollection[keyId] = tmpId;
-
-            var tmpName = namesCollection[keyName];
-            tmpName.Add(id);
-            namesCollection[keyName] = tmpName;
+        private bool TryAdd<T1, T2>(T1 key, T2 value, Dictionary<long, List<T2>> dictionary)
+        {
+            bool isFirst;
+            var mainKey = idGenerator.GetId(key, out isFirst);
+            if (isFirst) dictionary.Add(mainKey, new List<T2>() { value });
+            else
+            {
+                var tmp = dictionary[mainKey];
+                tmp.Add(value);
+                dictionary[mainKey] = tmp;
+            }
             return true;
         }
 
