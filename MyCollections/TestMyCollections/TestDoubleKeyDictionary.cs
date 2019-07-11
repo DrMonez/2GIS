@@ -442,6 +442,17 @@ namespace TestMyCollections
             }
             public override int GetHashCode() => Value.GetHashCode();
             public bool Equals(UserType other) => Value.Equals(other.Value);
+
+            public override bool Equals(object obj)
+            {
+                var res = false;
+                try
+                {
+                    res = Value.Equals(((UserType)obj).Value);
+                }
+                catch { res = false; }
+                return res;
+            }
         }
     }
 }
