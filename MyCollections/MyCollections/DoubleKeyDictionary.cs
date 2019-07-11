@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading;
 
 namespace MyCollections
 {
@@ -19,6 +15,7 @@ namespace MyCollections
         {
             get
             {
+                if (id == null || name == null ) throw new ArgumentNullException();
                 bool isFirst;
                 var key = idGenerator.GetId((id, name), out isFirst);
                 if(!isFirst) return values[key];
@@ -28,6 +25,7 @@ namespace MyCollections
 
         public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
+            if (id == null || name == null || value == null) throw new ArgumentNullException();
             bool isFirst;
             var mainId = idGenerator.GetId((id, name), out isFirst);
             if (!isFirst) return false;
@@ -44,6 +42,7 @@ namespace MyCollections
 
         public void Remove(TKeyId id, TKeyName name)
         {
+            if (id == null || name == null ) throw new ArgumentNullException();
             bool isFirst;
             var key = idGenerator.GetId((id, name), out isFirst);
             if(!isFirst)
@@ -65,6 +64,7 @@ namespace MyCollections
 
         private Dictionary<T1, TValue> GetBy<T1,T2>(T2 key)
         {
+            if (key == null) throw new ArgumentNullException();
             var res = new Dictionary<T1, TValue>();
             List<T1> id;
             if (keys.TryGetValue(key, out id))
@@ -87,6 +87,7 @@ namespace MyCollections
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
+            if (id == null || name == null || value == null) throw new ArgumentNullException();
             values = new Dictionary<long, TValue>();
             keys = new Keys<TKeyId, TKeyName>(id, name);
 
@@ -106,6 +107,7 @@ namespace MyCollections
 
         public bool TryGetValue<T1,T2>(T1 key, out List<T2> value)
         {
+            if (key == null) throw new ArgumentNullException();
             bool isFirst;
             var mainKey = idGenerator.GetId(key, out isFirst);
             if(isFirst)
@@ -122,6 +124,7 @@ namespace MyCollections
 
         public bool TryAdd(TKeyId id, TKeyName name)
         {
+            if (id == null || name == null) throw new ArgumentNullException();
             var isAddId = TryAdd(id, name, idCollection);
             var isAddName = TryAdd(name, id, namesCollection);
             return true;
@@ -129,6 +132,7 @@ namespace MyCollections
 
         private bool TryAdd<T1, T2>(T1 key, T2 value, Dictionary<long, List<T2>> dictionary)
         {
+            if (key == null || value == null) throw new ArgumentNullException();
             bool isFirst;
             var mainKey = idGenerator.GetId(key, out isFirst);
             if (isFirst) dictionary.Add(mainKey, new List<T2>() { value });
@@ -149,6 +153,7 @@ namespace MyCollections
 
         public void TryRemove(TKeyId id, TKeyName name)
         {
+            if (id == null || name == null) throw new ArgumentNullException();
             Remove(id, name, idCollection);
             Remove(name, id, namesCollection);
         }
@@ -167,6 +172,7 @@ namespace MyCollections
 
         public Keys(TKeyId id, TKeyName name)
         {
+            if (id == null || name == null) throw new ArgumentNullException();
             idCollection = new Dictionary<long, List<TKeyName>>();
             namesCollection = new Dictionary<long, List<TKeyId>>();
 
