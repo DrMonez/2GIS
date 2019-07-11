@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MyCollections;
 
@@ -181,41 +178,47 @@ namespace TestMyCollections
             Assert.AreEqual(expected, actual);
         }
 
-        //[TestMethod]
-        //public void RemoveTest()
-        //{
-        //    var a = new DoubleKeyDictionary<int, string, double>();
-        //    a.TryAdd(new Tuple<int, string, double>(0, "0", 0.5));
-        //    a.TryAdd(new Tuple<int, string, double>(1, "2", 0.7));
-        //    a.TryAdd(new Tuple<int, string, double>(1, "1", 0.6));
-        //    a.TryAdd(new Tuple<int, string, double>(3, "3", 0.8));
-        //    a.TryAdd(new Tuple<int, string, double>(4, "4", 0.9));
+        [TestMethod]
+        public void RemoveTest()
+        {
+            var a = new DoubleKeyDictionary<int, string, double>();
+            a.TryAdd(0, "0", 0.5);
+            a.TryAdd(1, "2", 0.7);
+            a.TryAdd(1, "1", 0.6);
+            a.TryAdd(3, "3", 0.8);
+            a.TryAdd(4, "4", 0.9);
 
-        //    a.Remove(1, "1");
+            a.Remove(1, "1");
 
-        //    var expectedCount = 4;
-        //    var actualCount = a.Count;
-        //    Assert.AreEqual(expectedCount, actualCount);
+            var expectedCount = 4;
+            var actualCount = a.Count;
+            Assert.AreEqual(expectedCount, actualCount);
 
-        //    var elem = a.GetByName("0");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.AreEqual(new Tuple<int, double>(0, 0.5), elem[0]);
+            var elem = a.GetByName("0");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual( 0.5, elem[0]);
+            
+            try
+            {
+                a.GetByName("1");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is KeyNotFoundException);
+            }
 
-        //    elem = a.GetByName("1");
-        //    Assert.AreEqual(null, elem);
+            elem = a.GetByName("2");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.7, elem[1]);
 
-        //    elem = a.GetByName("2");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.AreEqual(new Tuple<int, double>(1, 0.7), elem[0]);
+            elem = a.GetByName("3");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.8, elem[3]);
 
-        //    elem = a.GetByName("3");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.AreEqual(new Tuple<int, double>(3, 0.8), elem[0]);
-
-        //    elem = a.GetByName("4");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.AreEqual(new Tuple<int, double>(4, 0.9), elem[0]);
-        //}
+            elem = a.GetByName("4");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.9, elem[4]);
+        }
     }
 
 
@@ -394,45 +397,48 @@ namespace TestMyCollections
             Assert.AreEqual(expected, actual);
         }
 
-        //[TestMethod]
-        //public void RemoveTest()
-        //{
-        //    var a = new DoubleKeyDictionary<UserType, string, double>();
-        //    a.TryAdd(new Tuple<UserType, string, double>(new UserType("0"), "0", 0.5));
-        //    a.TryAdd(new Tuple<UserType, string, double>(new UserType("1"), "2", 0.7));
-        //    a.TryAdd(new Tuple<UserType, string, double>(new UserType("1"), "1", 0.6));
-        //    a.TryAdd(new Tuple<UserType, string, double>(new UserType("3"), "3", 0.8));
-        //    a.TryAdd(new Tuple<UserType, string, double>(new UserType("4"), "4", 0.9));
+        [TestMethod]
+        public void RemoveTest()
+        {
+            var a = new DoubleKeyDictionary<UserType, string, double>();
+            a.TryAdd(new UserType("0"), "0", 0.5);
+            a.TryAdd(new UserType("1"), "2", 0.7);
+            a.TryAdd(new UserType("1"), "1", 0.6);
+            a.TryAdd(new UserType("3"), "3", 0.8);
+            a.TryAdd(new UserType("4"), "4", 0.9);
 
-        //    a.Remove(new UserType("1"), "1");
+            a.Remove(new UserType("1"), "1");
 
-        //    var expectedCount = 4;
-        //    var actualCount = a.Count;
-        //    Assert.AreEqual(expectedCount, actualCount);
+            var expectedCount = 4;
+            var actualCount = a.Count;
+            Assert.AreEqual(expectedCount, actualCount);
 
-        //    var elem = a.GetByName("0");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.IsTrue("0" == elem[0].Item1.Value);
-        //    Assert.AreEqual(0.5, elem[0].Item2);
+            var elem = a.GetByName("0");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.5, elem[new UserType("0")]);
 
-        //    elem = a.GetByName("1");
-        //    Assert.AreEqual(null, elem);
+            try
+            {
+                a.GetByName("1");
+            }
+            catch (Exception ex)
+            {
+                Assert.IsTrue(ex is KeyNotFoundException);
+            }
 
-        //    elem = a.GetByName("2");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.IsTrue("1" == elem[0].Item1.Value);
-        //    Assert.AreEqual(0.7, elem[0].Item2);
+            elem = a.GetByName("2");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.7, elem[new UserType("1")]);
 
-        //    elem = a.GetByName("3");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.IsTrue("3" == elem[0].Item1.Value);
-        //    Assert.AreEqual(0.8, elem[0].Item2);
+            elem = a.GetByName("3");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.8, elem[new UserType("3")]);
 
-        //    elem = a.GetByName("4");
-        //    Assert.AreEqual(1, elem.Length);
-        //    Assert.IsTrue("4" == elem[0].Item1.Value);
-        //    Assert.AreEqual(0.9, elem[0].Item2);
-        //}
+            elem = a.GetByName("4");
+            Assert.AreEqual(1, elem.Count);
+            Assert.AreEqual(0.9, elem[new UserType("4")]);
+        }
+
         public class UserType : IEquatable<UserType>
         {
             public string Value;
