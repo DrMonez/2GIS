@@ -104,12 +104,13 @@ namespace MyCollections
         private Dictionary<long, List<TKeyName>> idCollection = new Dictionary<long, List<TKeyName>>();
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
         IDGenerator idGenerator = new IDGenerator();
+        IDGenerator nameGenerator = new IDGenerator();
 
         public bool TryGetValue<T1,T2>(T1 key, out List<T2> value)
         {
             if (key == null) throw new ArgumentNullException();
             bool isFirst;
-            var mainKey = idGenerator.GetId(key, out isFirst);
+            var mainKey = GetKeyId(key, out isFirst);
             if(isFirst)
             {
                 value = new List<T2>();
@@ -122,19 +123,36 @@ namespace MyCollections
             return true;
         }
 
+        private long GetKeyId<T>(string type, T key, out bool isFirst)
+        {
+            long resultId = 0;
+            switch (type)
+            {
+                case "id":
+                    resultId = idGenerator.GetId(key, out isFirst);
+                    break;
+                case "name":
+                    resultId = nameGenerator.GetId(key, out isFirst);
+                    break;
+                default:
+                    throw new ArgumentException();
+            }
+            return resultId;
+        }
+
         public bool TryAdd(TKeyId id, TKeyName name)
         {
             if (id == null || name == null) throw new ArgumentNullException();
-            var isAddId = TryAdd(id, name, idCollection);
-            var isAddName = TryAdd(name, id, namesCollection);
+            var isAddId = TryAdd("id", id, name);
+            var isAddName = TryAdd("name", name, id);
             return true;
         }
 
-        private bool TryAdd<T1, T2>(T1 key, T2 value, Dictionary<long, List<T2>> dictionary)
+        private bool TryAdd<T1, T2>(string type, T1 key, T2 value)
         {
             if (key == null || value == null) throw new ArgumentNullException();
             bool isFirst;
-            var mainKey = idGenerator.GetId(key, out isFirst);
+            var mainKey = GetKeyId(type, key, out isFirst);
             if (isFirst) dictionary.Add(mainKey, new List<T2>() { value });
             else
             {
@@ -154,14 +172,14 @@ namespace MyCollections
         public void TryRemove(TKeyId id, TKeyName name)
         {
             if (id == null || name == null) throw new ArgumentNullException();
-            Remove(id, name, idCollection);
-            Remove(name, id, namesCollection);
+            Remove("id", id, name);
+            Remove("name", name, id);
         }
 
-        private void Remove<T1, T2>(T1 key, T2 value, Dictionary<long, List<T2>> dictionary)
+        private void Remove<T1, T2>(string type, T1 key, T2 value)
         {
             bool isFirstId;
-            var mainKey = idGenerator.GetId(key, out isFirstId);
+            var mainKey = GetKeyId(type, key, out isFirstId);
             if (isFirstId) throw new KeyNotFoundException();
 
             var tmpId = dictionary[mainKey];
@@ -177,9 +195,9 @@ namespace MyCollections
             namesCollection = new Dictionary<long, List<TKeyId>>();
 
             bool isFirstId;
-            var keyId = idGenerator.GetId(id, out isFirstId);
+            var keyId = GetKeyId("id", id, out isFirstId);
             bool isFirstName;
-            var keyName = idGenerator.GetId(name, out isFirstName);
+            var keyName = GetKeyId("name", name, out isFirstName);
 
             idCollection.Add(keyId, new List<TKeyName>() { name });
             namesCollection.Add(keyName, new List<TKeyId>() { id });
