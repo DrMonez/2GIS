@@ -11,5 +11,8 @@ namespace MyCollections
         void Add(TKeyId id, TKeyName name, TValue value);
         void Remove(TKeyId id, TKeyName name);
         void Clear();
+        ICollection<TKeyId> IdKeys { get; }
+        ICollection<TKeyName> NameKeys { get; }
+        ICollection<TValue> Values { get; }
     }
 }
