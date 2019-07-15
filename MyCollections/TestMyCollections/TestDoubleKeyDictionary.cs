@@ -21,10 +21,14 @@ namespace TestMyCollections
         {
             var a = new DoubleKeyDictionary<int, string, double>();
             a.Add(0, "0", 0.0);
-            a.Add(0, "0", 0.0);
-            a.Add(0, "0", 0.0);
-            a.Add(0, "0", 0.0);
-            Assert.AreEqual(1, a.Count);
+            try
+            {
+                a.Add(0, "0", 0.0);
+            }
+            catch(Exception e)
+            {
+                Assert.IsTrue(e is ArgumentOutOfRangeException);
+            }
         }
 
         [TestMethod]
@@ -240,10 +244,14 @@ namespace TestMyCollections
         {
             var a = new DoubleKeyDictionary<UserType, string, double>();
             a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("0"), "0", 0.0);
-            Assert.AreEqual(1, a.Count);
+            try
+            {
+                a.Add(new UserType("0"), "0", 0.0);
+            }
+            catch(Exception e)
+            {
+                Assert.IsTrue(e is ArgumentOutOfRangeException);
+            }
         }
 
         [TestMethod]
