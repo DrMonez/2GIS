@@ -19,7 +19,7 @@ namespace TestMyCollections
             var cd = new ConcurrentDictionary<string, int>();
             var xxxx = new DoubleKeyDictionary<int, int, int>();
 
-            xxxx.TryAdd(0, 0, 0);
+            xxxx.Add(0, 0, 0);
 
             // Хотим получить элемент с ключом "b", если нет - создаем  
             int value = cd.GetOrAdd("b", (key) => 555);
@@ -38,7 +38,7 @@ namespace TestMyCollections
             {
                 // Если ключа нет – добавляем 
                 // Если есть – обновляем значение 
-                xxxx.TryAdd(i, i, i);
+                xxxx.Add(i, i, i);
             });
 
             var a = cd["a"];

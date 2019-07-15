@@ -8,7 +8,7 @@ namespace MyCollections
         int Count { get; }
         Dictionary<TKeyName,TValue> GetById(TKeyId id);
         Dictionary<TKeyId, TValue> GetByName(TKeyName name);
-        bool TryAdd(TKeyId id, TKeyName name, TValue value);
+        void Add(TKeyId id, TKeyName name, TValue value);
         void Remove(TKeyId id, TKeyName name);
         void Clear();
     }
