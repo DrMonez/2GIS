@@ -11,6 +11,12 @@ namespace MyCollections
 
         public int Count => values.Count;
 
+        public ICollection<TKeyId> IdKeys => keys.IdKeys;
+
+        public ICollection<TKeyName> NameKeys => keys.NameKeys;
+
+        public ICollection<TValue> Values => values.Values;
+
         public TValue this[TKeyId id, TKeyName name]
         {
             get
@@ -28,7 +34,7 @@ namespace MyCollections
             if (id == null || name == null || value == null) throw new ArgumentNullException();
             bool isFirst;
             var mainId = idGenerator.GetId((id, name), out isFirst);
-            if (!isFirst || !keys.TryAdd(id, name)) throw new ArgumentException();
+            if (!isFirst || !keys.TryAdd(id, name)) throw new ArgumentOutOfRangeException();
             values.Add(mainId, value);
         }
 
@@ -95,7 +101,4 @@ namespace MyCollections
         }
         #endregion
     }
-    
-
-    
 }

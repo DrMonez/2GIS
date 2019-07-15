@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MyCollections
@@ -10,6 +11,32 @@ namespace MyCollections
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
         IDGenerator idGenerator = new IDGenerator();
         IDGenerator nameGenerator = new IDGenerator();
+
+        public ICollection<TKeyId> IdKeys
+        {
+            get
+            {
+                var res = new List<TKeyId>();
+                foreach(var key in namesCollection.Keys)
+                {
+                    res.AddRange(namesCollection[key]);
+                }
+                return res.Distinct().ToList();
+            }
+        }
+
+        public ICollection<TKeyName> NameKeys
+        {
+            get
+            {
+                var res = new List<TKeyName>();
+                foreach (var key in idCollection.Keys)
+                {
+                    res.AddRange(idCollection[key]);
+                }
+                return res.Distinct().ToList();
+            }
+        }
 
         public bool TryGetValue<T1, T2>(string type, T1 key, out List<T2> value)
         {
@@ -88,7 +115,7 @@ namespace MyCollections
                     resultId = nameGenerator.GetId(key, out isFirst);
                     break;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException();
             }
             return resultId;
         }
@@ -105,7 +132,7 @@ namespace MyCollections
                     res = namesCollection[key] as List<T>;
                     break;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException();
             }
             return res;
         }
@@ -119,9 +146,11 @@ namespace MyCollections
                 case "name":
                     return namesCollection as Dictionary<long, List<T>>;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException();
             }
         }
+
+        public Keys() { }
 
         public Keys(TKeyId id, TKeyName name)
         {
@@ -137,7 +166,5 @@ namespace MyCollections
             idCollection.Add(keyId, new List<TKeyName>() { name });
             namesCollection.Add(keyName, new List<TKeyId>() { id });
         }
-
-        public Keys() { }
     }
 }
