@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MyCollections;
 
@@ -8,6 +9,42 @@ namespace TestMyCollections
     [TestClass]
     public class TestDoubleKeyDictionary
     {
+        [TestMethod]
+        public void IdKeysTest()
+        {
+            var a = new DoubleKeyDictionary<int, string, double>();
+            a.Add(0, "0", 0.0);
+            a.Add(1, "0", 1.0);
+            a.Add(2, "0", 2.0);
+            var actual = a.IdKeys.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(i, actual[i]);
+        }
+
+        [TestMethod]
+        public void NameKeysTest()
+        {
+            var a = new DoubleKeyDictionary<int, string, double>();
+            a.Add(0, "0", 0.0);
+            a.Add(1, "1", 1.0);
+            a.Add(2, "2", 2.0);
+            var actual = a.NameKeys.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(i.ToString(), actual[i]);
+        }
+
+        [TestMethod]
+        public void ValuesTest()
+        {
+            var a = new DoubleKeyDictionary<int, string, double>();
+            a.Add(0, "0", 0.0);
+            a.Add(1, "1", 1.0);
+            a.Add(2, "2", 2.0);
+            var actual = a.Values.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(i, actual[i]);
+        }
+
         [TestMethod]
         public void AddTest()
         {
@@ -231,6 +268,48 @@ namespace TestMyCollections
     [TestClass]
     public class TestDoubleKeyDictionaryWithUserType
     {
+        [TestMethod]
+        public void IdKeysTest()
+        {
+            var a = new DoubleKeyDictionary<UserType, string, double>();
+            a.Add(new UserType("0"), "0", 0.0);
+            a.Add(new UserType("1"), "1", 1.0);
+            a.Add(new UserType("2"), "2", 2.0);
+
+            var expected = new List<UserType> { new UserType("0"), new UserType("1"), new UserType("2") };
+            var actual = a.IdKeys.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
+        [TestMethod]
+        public void NameKeysTest()
+        {
+            var a = new DoubleKeyDictionary<UserType, string, double>();
+            a.Add(new UserType("0"), "0", 0.0);
+            a.Add(new UserType("1"), "1", 1.0);
+            a.Add(new UserType("2"), "2", 2.0);
+
+            var expected = new List<string> { "0", "1", "2" };
+            var actual = a.NameKeys.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
+        [TestMethod]
+        public void ValuesTest()
+        {
+            var a = new DoubleKeyDictionary<UserType, string, double>();
+            a.Add(new UserType("0"), "0", 0.0);
+            a.Add(new UserType("1"), "1", 1.0);
+            a.Add(new UserType("2"), "2", 2.0);
+
+            var expected = new List<double> { 0.0, 1.0, 2.0 };
+            var actual = a.Values.ToList();
+            for (var i = 0; i < actual.Count; i++)
+                Assert.AreEqual(expected[i], actual[i]);
+        }
+
         [TestMethod]
         public void AddTest()
         {
