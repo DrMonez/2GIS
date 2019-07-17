@@ -1,15 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MyCollections
 {
     interface IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         int Count { get; }
-        Tuple<TKeyName, TValue>[] GetById(TKeyId id);
-        Tuple<TKeyId, TValue>[] GetByName(TKeyName name);
-        bool TryAdd(TKeyId id, TKeyName name, TValue value);
-        bool TryAdd(Tuple<TKeyId, TKeyName, TValue> elem);
+        Dictionary<TKeyName,TValue> GetById(TKeyId id);
+        Dictionary<TKeyId, TValue> GetByName(TKeyName name);
+        void Add(TKeyId id, TKeyName name, TValue value);
         void Remove(TKeyId id, TKeyName name);
         void Clear();
+        ICollection<TKeyId> IdKeys { get; }
+        ICollection<TKeyName> NameKeys { get; }
+        ICollection<TValue> Values { get; }
     }
 }
