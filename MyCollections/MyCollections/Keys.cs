@@ -41,8 +41,7 @@ namespace MyCollections
         public bool TryGetValue<T1, T2>(string type, T1 key, out List<T2> value)
         {
             if (key == null) throw new ArgumentNullException();
-            bool isFirst;
-            var mainKey = GetKeyId(type, key, out isFirst);
+            var mainKey = GetKeyId(type, key, out bool isFirst);
             if (isFirst)
             {
                 value = new List<T2>();
@@ -92,8 +91,7 @@ namespace MyCollections
 
         private void Remove<T1, T2>(string type, T1 key, T2 value)
         {
-            bool isFirstId;
-            var mainKey = GetKeyId(type, key, out isFirstId);
+            var mainKey = GetKeyId(type, key, out bool isFirstId);
             if (isFirstId) throw new KeyNotFoundException();
 
             var dictionary = GetCollection<T2>(type);
@@ -157,11 +155,9 @@ namespace MyCollections
             if (id == null || name == null) throw new ArgumentNullException();
             idCollection = new Dictionary<long, List<TKeyName>>();
             namesCollection = new Dictionary<long, List<TKeyId>>();
-
-            bool isFirstId;
-            var keyId = GetKeyId("id", id, out isFirstId);
-            bool isFirstName;
-            var keyName = GetKeyId("name", name, out isFirstName);
+            
+            var keyId = GetKeyId("id", id, out bool isFirstId);
+            var keyName = GetKeyId("name", name, out bool isFirstName);
 
             idCollection.Add(keyId, new List<TKeyName>() { name });
             namesCollection.Add(keyName, new List<TKeyId>() { id });
