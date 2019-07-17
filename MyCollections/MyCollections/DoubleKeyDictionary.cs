@@ -22,8 +22,7 @@ namespace MyCollections
             get
             {
                 if (id == null || name == null ) throw new ArgumentNullException();
-                bool isFirst;
-                var key = idGenerator.GetId((id, name), out isFirst);
+                var key = idGenerator.GetId((id, name), out bool isFirst);
                 if(!isFirst) return values[key];
                 throw new KeyNotFoundException();
             }
@@ -32,8 +31,7 @@ namespace MyCollections
         public void Add(TKeyId id, TKeyName name, TValue value)
         {
             if (id == null || name == null || value == null) throw new ArgumentNullException();
-            bool isFirst;
-            var mainId = idGenerator.GetId((id, name), out isFirst);
+            var mainId = idGenerator.GetId((id, name), out bool isFirst);
             if (!isFirst || !keys.TryAdd(id, name)) throw new ArgumentOutOfRangeException();
             values.Add(mainId, value);
         }
@@ -47,8 +45,7 @@ namespace MyCollections
         public void Remove(TKeyId id, TKeyName name)
         {
             if (id == null || name == null ) throw new ArgumentNullException();
-            bool isFirst;
-            var key = idGenerator.GetId((id, name), out isFirst);
+            var key = idGenerator.GetId((id, name), out bool isFirst);
             if(!isFirst)
             {
                 values.Remove(key);
@@ -70,13 +67,12 @@ namespace MyCollections
         {
             if (key == null) throw new ArgumentNullException();
             var res = new Dictionary<T1, TValue>();
-            List<T1> id;
-            if (keys.TryGetValue(type, key, out id))
+
+            if (keys.TryGetValue(type, key, out List<T1> id))
                 foreach (var x in id)
                 {
-                    bool isFirst;
                     var mainKey = typeof(T2) == typeof(TKeyId) ? (object)(key, x) : (object)(x, key);
-                    var currentId = idGenerator.GetId(mainKey, out isFirst);
+                    var currentId = idGenerator.GetId(mainKey, out bool isFirst);
                     if(!isFirst) res.Add(x, values[currentId]);
                 }
             return res;
@@ -94,9 +90,8 @@ namespace MyCollections
             if (id == null || name == null || value == null) throw new ArgumentNullException();
             values = new Dictionary<long, TValue>();
             keys = new Keys<TKeyId, TKeyName>(id, name);
-
-            bool isFirst;
-            var key = idGenerator.GetId((id, name), out isFirst);
+            
+            var key = idGenerator.GetId((id, name), out bool isFirst);
             values.Add(key, value);
         }
         #endregion
