@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MyCollections
 {
-    public sealed class Keys<TKeyId, TKeyName>
+    public internal class Keys<TKeyId, TKeyName>
     {
         private Dictionary<long, List<TKeyName>> idCollection = new Dictionary<long, List<TKeyName>>();
         private Dictionary<long, List<TKeyId>> namesCollection = new Dictionary<long, List<TKeyId>>();
