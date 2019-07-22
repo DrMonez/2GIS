@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace MyCollections
 {
@@ -9,6 +10,7 @@ namespace MyCollections
         private Keys<TKeyId, TKeyName> keys;
         private Dictionary<long, TValue> values;
         IDGenerator idGenerator = new IDGenerator();
+        List<RWLock> locks = new List<RWLock>(31);
 
         public int Count => values.Count;
 
@@ -18,22 +20,7 @@ namespace MyCollections
 
         public ICollection<TValue> Values => values.Values;
 
-        public TValue AddOrUpdate(TKeyId id, TKeyName name, TValue value, Func<TKeyId, TKeyName, TValue, TValue> updateValueFactory)
-        {
-            throw new NotImplementedException();
-        }
-
         public void Clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Dictionary<TKeyName, TValue> GetByIdOrAdd(TKeyId id, Func<TKeyId, TKeyName, TValue, TValue> valueFactory)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Dictionary<TKeyId, TValue> GetByNameOrAdd(TKeyName name, Func<TKeyId, TKeyName, TValue, TValue> valueFactory)
         {
             throw new NotImplementedException();
         }
@@ -57,5 +44,49 @@ namespace MyCollections
         {
             throw new NotImplementedException();
         }
+
+        public ConcurrentDoubleKeyDictionary()
+        {
+            for (var i = 0; i < locks.Count; i++)
+                locks[i] = new RWLock();
+        }
+
+        private int GetLockNumber()
+        {
+            throw new NotImplementedException();
+        }
     }
+
+    internal class RWLock : IDisposable
+    {
+        public struct WriteLockToken : IDisposable
+        {
+            private readonly ReaderWriterLockSlim @lock;
+            public WriteLockToken(ReaderWriterLockSlim @lock)
+            {
+                this.@lock = @lock;
+                @lock.EnterWriteLock();
+            }
+            public void Dispose() => @lock.ExitWriteLock();
+        }
+
+        public struct ReadLockToken : IDisposable
+        {
+            private readonly ReaderWriterLockSlim @lock;
+            public ReadLockToken(ReaderWriterLockSlim @lock)
+            {
+                this.@lock = @lock;
+                @lock.EnterReadLock();
+            }
+            public void Dispose() => @lock.ExitReadLock();
+        }
+
+        private readonly ReaderWriterLockSlim @lock = new ReaderWriterLockSlim();
+
+        public ReadLockToken ReadLock() => new ReadLockToken(@lock);
+        public WriteLockToken WriteLock() => new WriteLockToken(@lock);
+
+        public void Dispose() => @lock.Dispose();
+    }
+
 }
