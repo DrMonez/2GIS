@@ -54,6 +54,14 @@ namespace TestMyCollections
         }
 
         [TestMethod]
+        public void AddSameTypesTest()
+        {
+            var a = new DoubleKeyDictionary<int, int, double>();
+            a.Add(0, 0, 0.0);
+            Assert.AreEqual(1, a.Count);
+        }
+
+        [TestMethod]
         public void AddSameObjectsTest()
         {
             var a = new DoubleKeyDictionary<int, string, double>();
@@ -116,13 +124,12 @@ namespace TestMyCollections
             a.Add(0, "0", 0.5);
             a.Add(0, "1", 0.5);
             a.Add(0, "2", 0.5);
-            a.Add(0, "3", 0.5);
+            a.Add(1, "3", 0.5);
             var expected = new Dictionary<string, double>()
             {
                 { "0", 0.5 },
                 { "1", 0.5 },
-                { "2", 0.5 },
-                { "3", 0.5 }
+                { "2", 0.5 }
             };
             var actual = a.GetById(0);
             Assert.AreEqual(expected.Count, actual.Count);
@@ -153,13 +160,12 @@ namespace TestMyCollections
             a.Add(0, "0", 0.5);
             a.Add(1, "0", 0.5);
             a.Add(2, "0", 0.5);
-            a.Add(3, "0", 0.5);
+            a.Add(3, "1", 0.5);
             var expected = new Dictionary<int, double>()
             {
                 { 0, 0.5 },
                 { 1, 0.5 },
-                { 2, 0.5 },
-                { 3, 0.5 }
+                { 2, 0.5 }
             };
             var actual = a.GetByName("0");
             Assert.AreEqual(expected.Count, actual.Count);
@@ -315,6 +321,14 @@ namespace TestMyCollections
         {
             var a = new DoubleKeyDictionary<UserType, string, double>();
             a.Add(new UserType("0"), "0", 0.0);
+            Assert.AreEqual(1, a.Count);
+        }
+
+        [TestMethod]
+        public void AddSameTypesTest()
+        {
+            var a = new DoubleKeyDictionary<UserType, UserType, double>();
+            a.Add(new UserType("0"), new UserType("0"), 0.0);
             Assert.AreEqual(1, a.Count);
         }
 
