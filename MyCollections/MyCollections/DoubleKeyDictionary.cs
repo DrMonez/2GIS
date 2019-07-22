@@ -71,7 +71,7 @@ namespace MyCollections
             if (keys.TryGetValue(type, key, out List<T1> id))
                 foreach (var x in id)
                 {
-                    var mainKey = typeof(T2) == typeof(TKeyId) ? (object)(key, x) : (object)(x, key);
+                    var mainKey = type == "id" ? (object)(key, x) : (object)(x, key);
                     var currentId = idGenerator.GetId(mainKey, out bool isFirst);
                     if(!isFirst) res.Add(x, values[currentId]);
                 }
