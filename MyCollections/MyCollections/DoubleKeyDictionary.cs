@@ -21,7 +21,9 @@ namespace MyCollections
         {
             get
             {
-                if (id == null || name == null ) throw new ArgumentNullException();
+                if (id == null ) throw new ArgumentNullException("id");
+                if (name == null ) throw new ArgumentNullException("name");
+
                 var key = idGenerator.GetId((id, name), out bool isFirst);
                 if(!isFirst) return values[key];
                 throw new KeyNotFoundException();
@@ -30,7 +32,9 @@ namespace MyCollections
 
         public void Add(TKeyId id, TKeyName name, TValue value)
         {
-            if (id == null || name == null || value == null) throw new ArgumentNullException();
+            if (id == null) throw new ArgumentNullException("id");
+            if (name == null) throw new ArgumentNullException("name");
+            
             var mainId = idGenerator.GetId((id, name), out bool isFirst);
             if (!isFirst || !keys.TryAdd(id, name)) throw new ArgumentOutOfRangeException();
             values.Add(mainId, value);
@@ -44,7 +48,9 @@ namespace MyCollections
 
         public void Remove(TKeyId id, TKeyName name)
         {
-            if (id == null || name == null ) throw new ArgumentNullException();
+            if (id == null ) throw new ArgumentNullException("id");
+            if (name == null ) throw new ArgumentNullException("name");
+
             var key = idGenerator.GetId((id, name), out bool isFirst);
             if(!isFirst)
             {
@@ -87,7 +93,9 @@ namespace MyCollections
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
-            if (id == null || name == null || value == null) throw new ArgumentNullException();
+            if (id == null ) throw new ArgumentNullException("id");
+            if (name == null ) throw new ArgumentNullException("name");
+
             values = new Dictionary<long, TValue>();
             keys = new Keys<TKeyId, TKeyName>(id, name);
             
