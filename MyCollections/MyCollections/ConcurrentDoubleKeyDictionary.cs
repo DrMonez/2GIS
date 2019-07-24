@@ -5,12 +5,13 @@ using System.Threading;
 
 namespace MyCollections
 {
-    class ConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue> : IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
+    public class ConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue> : IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
+        //private readonly int threadsCount = 31;
         private Keys<TKeyId, TKeyName> keys;
         private Dictionary<long, TValue> values;
         IDGenerator idGenerator = new IDGenerator();
-        List<RWLock> locks = new List<RWLock>(31);
+        RWLock[] locks = new RWLock[31];
         RWLock globalLocker = new RWLock();
 
         public int Count
@@ -119,8 +120,9 @@ namespace MyCollections
 
         private int GetLockNumber(long id)
         {
-            var localNumber = (id & long.MaxValue) % values.Count;
-            var lockNumber = localNumber % locks.Count;
+            var count = values.Count == 0 ? 1 : values.Count;
+            var localNumber = (id & long.MaxValue) % count;
+            var lockNumber = localNumber % locks.Length;
             return (int)lockNumber;
         }
 
@@ -130,7 +132,7 @@ namespace MyCollections
             keys = new Keys<TKeyId, TKeyName>();
             values = new Dictionary<long, TValue>();
 
-            for (var i = 0; i < locks.Count; i++)
+            for (var i = 0; i < locks.Length; i++)
                 locks[i] = new RWLock();
         }
         #endregion
