@@ -17,19 +17,25 @@ namespace TestMyCollections
         {
             // Создаем конкурентный словарь 
             var cd = new ConcurrentDictionary<string, int>();
+            var cdkd = new ConcurrentDoubleKeyDictionary<string, int, int>();
             
 
             // Хотим получить элемент с ключом "b", если нет - создаем  
-            int value = cd.GetOrAdd("b", (key) => 555);
+            //int value = cd.GetOrAdd("b", (key) => 555);
             // Проверяем: value = 555; 
-            value = cd.GetOrAdd("b", -333);
+            //value = cd.GetOrAdd("b", -333);
             // Параллельно пытаемся обновить элемент с ключом "a" 
             Parallel.For(0, 100000, i =>
             {
                 // Если ключа нет – добавляем 
                 // Если есть – обновляем значение 
-                cd.AddOrUpdate("a", 1, (key, oldValue) => oldValue + 1);
+                cd.TryAdd(i.ToString(), i);
             });
+
+            Parallel.For(0, 100000, i =>
+             {
+                 cdkd.TryAdd(i.ToString(), i, i);
+             });
 
             Assert.AreEqual(100000, cd["a"]);
         }
