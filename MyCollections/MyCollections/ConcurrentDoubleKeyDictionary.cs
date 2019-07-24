@@ -11,50 +11,129 @@ namespace MyCollections
         private Dictionary<long, TValue> values;
         IDGenerator idGenerator = new IDGenerator();
         List<RWLock> locks = new List<RWLock>(31);
+        RWLock globalLocker = new RWLock();
 
-        public int Count => values.Count;
+        public int Count
+        {
+            get
+            {
+                using (globalLocker.ReadLock())
+                    return values.Count;
+            }
+        }
 
-        public ICollection<TKeyId> IdKeys => keys.IdKeys;
+        public ICollection<TKeyId> IdKeys
+        {
+            get
+            {
+                using (globalLocker.ReadLock())
+                    return keys.IdKeys;
+            }
+        }
 
-        public ICollection<TKeyName> NameKeys => keys.NameKeys;
+        public ICollection<TKeyName> NameKeys
+        {
+            get
+            {
+                using (globalLocker.ReadLock())
+                    return keys.NameKeys;
+            }
+        }
 
-        public ICollection<TValue> Values => values.Values;
+        public ICollection<TValue> Values
+        {
+            get
+            {
+                using (globalLocker.ReadLock())
+                    return values.Values;
+            }
+        }
 
         public void Clear()
         {
-            throw new NotImplementedException();
+            using (globalLocker.WriteLock())
+            {
+                keys.Clear();
+                values.Clear();
+            }
         }
 
         public bool TryAdd(TKeyId id, TKeyName name, TValue value)
         {
-            throw new NotImplementedException();
+            if (id == null) throw new ArgumentNullException("id");
+            if (name == null) throw new ArgumentNullException("name");
+
+            using (globalLocker.ReadLock())
+            {
+                var mainId = idGenerator.GetId((id, name), out bool isFirst);
+                if (!isFirst ) return false;
+
+                var lockNo = GetLockNumber(mainId);
+                using (locks[lockNo].WriteLock())
+                {
+                    var isAdded = keys.TryAdd(id, name);
+                    if (!isAdded) return false;
+                    values.Add(mainId, value);
+                    return true;
+                }
+            }
         }
 
         public bool TryGetById(TKeyId id, out Dictionary<TKeyName, TValue> result)
         {
-            throw new NotImplementedException();
+            using (globalLocker.ReadLock())
+            {
+
+                throw new NotImplementedException();
+            }
         }
 
         public bool TryGetByName(TKeyName name, out Dictionary<TKeyId, TValue> result)
         {
-            throw new NotImplementedException();
+            using (globalLocker.ReadLock())
+            {
+
+                throw new NotImplementedException();
+            }
         }
 
         public bool TryRemove(TKeyId id, TKeyName name)
         {
-            throw new NotImplementedException();
+            if (id == null) throw new ArgumentNullException("id");
+            if (name == null) throw new ArgumentNullException("name");
+
+            using (globalLocker.ReadLock())
+            {
+                var key = idGenerator.GetId((id, name), out bool isFirst);
+                if (isFirst) return false;
+
+                var lockNo = GetLockNumber(key);
+                using (locks[lockNo].WriteLock())
+                {
+                    values.Remove(key);
+                    keys.TryRemove(id, name);
+                }
+                return true;
+            }
         }
 
+        private int GetLockNumber(long id)
+        {
+            var localNumber = (id & long.MaxValue) % values.Count;
+            var lockNumber = localNumber % locks.Count;
+            return (int)lockNumber;
+        }
+
+        #region constructors
         public ConcurrentDoubleKeyDictionary()
         {
+            keys = new Keys<TKeyId, TKeyName>();
+            values = new Dictionary<long, TValue>();
+
             for (var i = 0; i < locks.Count; i++)
                 locks[i] = new RWLock();
         }
-
-        private int GetLockNumber()
-        {
-            throw new NotImplementedException();
-        }
+        #endregion
     }
 
     internal class RWLock : IDisposable
