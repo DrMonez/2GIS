@@ -5,103 +5,141 @@ namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private Keys<TKeyId, TKeyName> keys;
-        private Dictionary<long, TValue> values;
-        IDGenerator idGenerator = new IDGenerator(); 
+        private Keys<TKeyId, TKeyName> _keys;
+        private Dictionary<long, TValue> _values;
+        private IDGenerator _idGenerator = new IDGenerator(); 
 
-        public int Count => values.Count;
+        public int Count => _values.Count;
 
-        public ICollection<TKeyId> IdKeys => keys.IdKeys;
+        public ICollection<TKeyId> IdKeys => _keys.IdKeys;
 
-        public ICollection<TKeyName> NameKeys => keys.NameKeys;
+        public ICollection<TKeyName> NameKeys => _keys.NameKeys;
 
-        public ICollection<TValue> Values => values.Values;
+        public ICollection<TValue> Values => _values.Values;
 
         public TValue this[TKeyId id, TKeyName name]
         {
             get
             {
-                if (id == null ) throw new ArgumentNullException("id");
-                if (name == null ) throw new ArgumentNullException("name");
+                if (id == null)
+                {
+                    throw new ArgumentNullException("id");
+                }
+                if (name == null)
+                {
+                    throw new ArgumentNullException("name");
+                }
 
-                var key = idGenerator.GetId((id, name), out bool isFirst);
-                if(!isFirst) return values[key];
-                throw new KeyNotFoundException();
+                var key = _idGenerator.GetId((id, name), out bool isFirst);
+                if (!isFirst)
+                {
+                    return _values[key];
+                }
+                else
+                {
+                    throw new KeyNotFoundException();
+                }
             }
+        }
+
+        public DoubleKeyDictionary()
+        {
+            _values = new Dictionary<long, TValue>();
+            _keys = new Keys<TKeyId, TKeyName>();
+        }
+
+        public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
+        {
+            if (id == null)
+            {
+                throw new ArgumentNullException("id");
+            }
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
+
+            _values = new Dictionary<long, TValue>();
+            _keys = new Keys<TKeyId, TKeyName>(id, name);
+
+            var key = _idGenerator.GetId((id, name), out bool isFirst);
+            _values.Add(key, value);
         }
 
         public void Add(TKeyId id, TKeyName name, TValue value)
         {
-            if (id == null) throw new ArgumentNullException("id");
-            if (name == null) throw new ArgumentNullException("name");
+            if (id == null)
+            {
+                throw new ArgumentNullException("id");
+            }
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
             
-            var mainId = idGenerator.GetId((id, name), out bool isFirst);
-            if (!isFirst || !keys.TryAdd(id, name)) throw new ArgumentOutOfRangeException();
-            values.Add(mainId, value);
+            var mainId = _idGenerator.GetId((id, name), out bool isFirst);
+            if (!isFirst || !_keys.TryAdd(id, name))
+            {
+                throw new ArgumentException();
+            }
+            _values.Add(mainId, value);
         }
 
         public void Clear()
         {
-            keys.Clear();
-            values.Clear();
+            _keys.Clear();
+            _values.Clear();
         }
 
         public void Remove(TKeyId id, TKeyName name)
         {
-            if (id == null ) throw new ArgumentNullException("id");
-            if (name == null ) throw new ArgumentNullException("name");
+            if (id == null)
+            {
+                throw new ArgumentNullException("id");
+            }
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
 
-            var key = idGenerator.GetId((id, name), out bool isFirst);
+            var key = _idGenerator.GetId((id, name), out bool isFirst);
             if(!isFirst)
             {
-                values.Remove(key);
-                keys.TryRemove(id, name);
+                _values.Remove(key);
+                _keys.TryRemove(id, name);
             }
         }
 
         public Dictionary<TKeyName, TValue> GetById(TKeyId id)
         {
+            if (id == null)
+            {
+                throw new ArgumentNullException("id");
+            }
             return GetBy<TKeyName, TKeyId>("id", id);
         }
 
         public Dictionary<TKeyId, TValue> GetByName(TKeyName name)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
             return GetBy<TKeyId, TKeyName>("name", name);
         }
 
         private Dictionary<T1, TValue> GetBy<T1,T2>(string type, T2 key)
         {
-            if (key == null) throw new ArgumentNullException();
             var res = new Dictionary<T1, TValue>();
 
-            if (keys.TryGetValue(type, key, out List<T1> id))
-                foreach (var x in id)
-                {
-                    var mainKey = type == "id" ? (object)(key, x) : (object)(x, key);
-                    var currentId = idGenerator.GetId(mainKey, out bool isFirst);
-                    if(!isFirst) res.Add(x, values[currentId]);
-                }
+            if (!_keys.TryGetValue(type, key, out List<T1> idList)) return res;
+            foreach (var id in idList)
+            {
+                var mainKey = type == "id" ? (object)(key, id) : (object)(id, key);
+                var currentId = _idGenerator.GetId(mainKey, out bool isFirst);
+                if (!isFirst) res.Add(id, _values[currentId]);
+            }
             return res;
         }
-
-        #region constructors
-        public DoubleKeyDictionary()
-        {
-            values = new Dictionary<long, TValue>();
-            keys = new Keys<TKeyId, TKeyName>();
-        }
-
-        public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
-        {
-            if (id == null ) throw new ArgumentNullException("id");
-            if (name == null ) throw new ArgumentNullException("name");
-
-            values = new Dictionary<long, TValue>();
-            keys = new Keys<TKeyId, TKeyName>(id, name);
-            
-            var key = idGenerator.GetId((id, name), out bool isFirst);
-            values.Add(key, value);
-        }
-        #endregion
     }
 }

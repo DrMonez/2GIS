@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MyCollections
 {
-    interface IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
+    public interface IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         int Count { get; }
         bool TryGetById(TKeyId id, out Dictionary<TKeyName, TValue> result);

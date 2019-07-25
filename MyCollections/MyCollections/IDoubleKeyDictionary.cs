@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace MyCollections
 {
-    interface IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
+    public interface IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         int Count { get; }
         Dictionary<TKeyName,TValue> GetById(TKeyId id);
