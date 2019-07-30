@@ -7,11 +7,10 @@ namespace MyCollections
 {
     public class ConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue> : IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        //private readonly int _threadsCount = 31;
-        private Keys<TKeyId, TKeyName> _keys;
-        private Dictionary<long, TValue> _values;
-        private IDGenerator _idGenerator = new IDGenerator();
-        private RWLock[] _locks = new RWLock[31];
+        private int _count = 0;
+        private ConcurrentKeys<TKeyId, TKeyName> _keys;
+        private Dictionary<long, TValue>[] _values = new Dictionary<long, TValue> [Constants.MaxThreadsCount];
+        private ConcurrentIDGenerator _idGenerator = new ConcurrentIDGenerator();
         private RWLock _globalLocker = new RWLock();
 
         public int Count
@@ -19,7 +18,9 @@ namespace MyCollections
             get
             {
                 using (_globalLocker.ReadLock())
-                    return _values.Count;
+                {
+                    return _count;
+                }
             }
         }
 
@@ -28,7 +29,9 @@ namespace MyCollections
             get
             {
                 using (_globalLocker.ReadLock())
+                {
                     return _keys.IdKeys;
+                }
             }
         }
 
@@ -37,7 +40,9 @@ namespace MyCollections
             get
             {
                 using (_globalLocker.ReadLock())
+                {
                     return _keys.NameKeys;
+                }
             }
         }
 
@@ -46,7 +51,20 @@ namespace MyCollections
             get
             {
                 using (_globalLocker.ReadLock())
-                    return _values.Values;
+                {
+                    var result = new TValue[_count];
+                    var index = 0;
+                    foreach (var values in _values)
+                    {
+                        lock (values)
+                        {
+                            var valuesOfDictionary = new Dictionary<long, TValue>.ValueCollection(values);
+                            valuesOfDictionary.CopyTo(result, index);
+                            index += values.Count;
+                        }
+                    }
+                    return result;
+                }
             }
         }
 
@@ -55,18 +73,19 @@ namespace MyCollections
             using (_globalLocker.WriteLock())
             {
                 _keys.Clear();
-                _values.Clear();
+                foreach(var values in _values)
+                {
+                    values.Clear();
+                }
             }
         }
 
         public ConcurrentDoubleKeyDictionary()
         {
-            _keys = new Keys<TKeyId, TKeyName>();
-            _values = new Dictionary<long, TValue>();
-
-            for (var i = 0; i < _locks.Length; i++)
+            _keys = new ConcurrentKeys<TKeyId, TKeyName>();
+            for (var i = 0; i < Constants.MaxThreadsCount; i++)
             {
-                _locks[i] = new RWLock();
+                _values[i] = new Dictionary<long, TValue>();
             }
         }
 
@@ -90,14 +109,18 @@ namespace MyCollections
                 }
 
                 var lockNo = GetLockNumber(mainId);
-                using (_locks[lockNo].WriteLock())
+                lock(_values[lockNo])
                 {
                     var isAdded = _keys.TryAdd(id, name);
                     if (!isAdded)
                     {
                         return false;
                     }
-                    _values.Add(mainId, value);
+                    lock (_values)
+                    {
+                        _values[lockNo].Add(mainId, value);
+                    }
+                    _count++;
                     return true;
                 }
             }
@@ -138,9 +161,9 @@ namespace MyCollections
                 if (isFirst) return false;
 
                 var lockNo = GetLockNumber(key);
-                using (_locks[lockNo].WriteLock())
+                lock(_values[lockNo])
                 {
-                    _values.Remove(key);
+                    _values[lockNo].Remove(key);
                     _keys.TryRemove(id, name);
                 }
                 return true;
@@ -149,43 +172,8 @@ namespace MyCollections
 
         private int GetLockNumber(long id)
         {
-            var count = _values.Count == 0 ? 1 : _values.Count;
-            var localNumber = (id & long.MaxValue) % count;
-            var lockNumber = localNumber % _locks.Length;
-            return (int)lockNumber;
+            var lockNumber = (int)id % Constants.MaxThreadsCount;
+            return lockNumber;
         }
     }
-
-    internal class RWLock : IDisposable
-    {
-        public struct WriteLockToken : IDisposable
-        {
-            private readonly ReaderWriterLockSlim @lock;
-            public WriteLockToken(ReaderWriterLockSlim @lock)
-            {
-                this.@lock = @lock;
-                @lock.EnterWriteLock();
-            }
-            public void Dispose() => @lock.ExitWriteLock();
-        }
-
-        public struct ReadLockToken : IDisposable
-        {
-            private readonly ReaderWriterLockSlim @lock;
-            public ReadLockToken(ReaderWriterLockSlim @lock)
-            {
-                this.@lock = @lock;
-                @lock.EnterReadLock();
-            }
-            public void Dispose() => @lock.ExitReadLock();
-        }
-
-        private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-
-        public ReadLockToken ReadLock() => new ReadLockToken(_lock);
-        public WriteLockToken WriteLock() => new WriteLockToken(_lock);
-
-        public void Dispose() => _lock.Dispose();
-    }
-
 }

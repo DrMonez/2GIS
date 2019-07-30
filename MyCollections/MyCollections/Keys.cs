@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MyCollections
 {
-    public class Keys<TKeyId, TKeyName>
+    internal class Keys<TKeyId, TKeyName>
     {
         private Dictionary<long, List<TKeyName>> _idCollection = new Dictionary<long, List<TKeyName>>();
         private Dictionary<long, List<TKeyId>> _namesCollection = new Dictionary<long, List<TKeyId>>();
@@ -67,17 +67,21 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("key");
             }
+
             var mainKey = GetKeyId(type, key, out bool isFirst);
             if (isFirst)
             {
                 value = new List<T2>();
                 return false;
             }
-            value = GetDictionary<T2>(type, mainKey);
-            return true;
+            else
+            {
+                value = GetDictionary<T2>(type, mainKey);
+                return true;
+            }
         }
 
-        public bool TryAdd(TKeyId id, TKeyName name)
+        public void Add(TKeyId id, TKeyName name)
         {
             if (id == null)
             {
@@ -87,9 +91,9 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("name");
             }
-            var isAddId = TryAdd("id", id, name);
-            var isAddName = TryAdd("name", name, id);
-            return true;
+
+            Add("id", id, name);
+            Add("name", name, id);
         }
 
         public void Clear()
@@ -98,7 +102,7 @@ namespace MyCollections
             _namesCollection.Clear();
         }
 
-        public void TryRemove(TKeyId id, TKeyName name)
+        public void Remove(TKeyId id, TKeyName name)
         {
             if (id == null)
             {
@@ -108,11 +112,12 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("name");
             }
+
             Remove("id", id, name);
             Remove("name", name, id);
         }
 
-        private bool TryAdd<T1, T2>(string type, T1 key, T2 value)
+        private void Add<T1, T2>(string type, T1 key, T2 value)
         {
             var mainKey = GetKeyId(type, key, out bool isFirst);
             
@@ -127,7 +132,6 @@ namespace MyCollections
                 tmp.Add(value);
                 dictionary[mainKey] = tmp;
             }
-            return true;
         }
 
         private void Remove<T1, T2>(string type, T1 key, T2 value)
@@ -152,10 +156,6 @@ namespace MyCollections
 
         private long GetKeyId<T>(string type, T key, out bool isFirst)
         {
-            if(type == null)
-            {
-                throw new ArgumentNullException("type");
-            }
             if (key == null)
             {
                 throw new ArgumentNullException("key");
@@ -178,11 +178,6 @@ namespace MyCollections
 
         private List<T> GetDictionary<T>(string type, long key)
         {
-            if (type == null)
-            {
-                throw new ArgumentNullException("type");
-            }
-
             var res = new List<T>();
             switch (type)
             {
@@ -209,6 +204,260 @@ namespace MyCollections
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+    }
+
+    internal class ConcurrentKeys<TKeyId, TKeyName>
+    {
+        private int _idCount = 0;
+        private int _namesCount = 0;
+        private Dictionary<long, List<TKeyName>>[] _idCollection = new Dictionary<long, List<TKeyName>>[Constants.MaxThreadsCount];
+        private Dictionary<long, List<TKeyId>>[] _namesCollection = new Dictionary<long, List<TKeyId>>[Constants.MaxThreadsCount];
+        private ConcurrentIDGenerator _idGenerator = new ConcurrentIDGenerator();
+        private ConcurrentIDGenerator _nameGenerator = new ConcurrentIDGenerator();
+        private RWLock _globalLocker = new RWLock();
+
+
+        public ICollection<TKeyId> IdKeys
+        {
+            get
+            {
+                using (_globalLocker.ReadLock())
+                {
+                    var result = new TKeyId[_idCount];
+                    var index = 0;
+                    foreach (var names in _namesCollection)
+                    {
+                        lock(names)
+                        {
+                            var idOfPart = new Dictionary<long, List<TKeyId>>.ValueCollection(names);
+                            foreach(var idList in idOfPart)
+                            {
+                                idList.CopyTo(result, index);
+                                index += idList.Count;
+                            }
+                        }
+                    }
+                    return result.Distinct().ToList();
+                }
+            }
+        }
+
+        public ICollection<TKeyName> NameKeys
+        {
+            get
+            {
+                using (_globalLocker.ReadLock())
+                {
+                    var result = new TKeyName[_namesCount];
+                    var index = 0;
+                    foreach (var id in _idCollection)
+                    {
+                        lock (id)
+                        {
+                            var namesOfPart = new Dictionary<long, List<TKeyName>>.ValueCollection(id);
+                            foreach(var namesList in namesOfPart)
+                            {
+                                namesList.CopyTo(result, index);
+                                index += namesList.Count;
+                            }
+                        }
+                    }
+                    return result.Distinct().ToList();
+                }
+            }
+        }
+
+        public ConcurrentKeys()
+        {
+            using (_globalLocker.WriteLock())
+            {
+                for (var i = 0; i < Constants.MaxThreadsCount; i++)
+                {
+                    _idCollection[i] = new Dictionary<long, List<TKeyName>>();
+                    _namesCollection[i] = new Dictionary<long, List<TKeyId>>();
+                }
+            }
+        }
+
+        public bool TryGetValue<T1, T2>(string type, T1 key, out List<T2> value)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException("key");
+            }
+
+            using (_globalLocker.ReadLock())
+            {
+                var mainKey = GetKeyId(type, key, out bool isFirst);
+                if (isFirst)
+                {
+                    value = new List<T2>();
+                    return false;
+                }
+
+                var lockNo = GetLockNumber(mainKey);
+                var dictionary = GetDictionary<T2>(type, lockNo);
+                lock (dictionary)
+                {
+                    value = dictionary[mainKey];
+                    return true;
+                }
+            }
+        }
+
+        public bool TryAdd(TKeyId id, TKeyName name)
+        {
+            if (id == null || name == null)
+            {
+                return false;
+            }
+            using (_globalLocker.ReadLock())
+            {
+                Add("id", id, name);
+                _idCount++;
+                Add("name", name, id);
+                _namesCount++;
+                return true;
+            }
+        }
+
+        public void Clear()
+        {
+            using (_globalLocker.WriteLock())
+            {
+                for (var i = 0; i < Constants.MaxThreadsCount; i++)
+                {
+                    _idCollection[i].Clear();
+                    _namesCollection[i].Clear();
+                }
+            }
+        }
+
+        public bool TryRemove(TKeyId id, TKeyName name)
+        {
+            if (id == null || name == null)
+            {
+                return false;
+            }
+            using (_globalLocker.ReadLock())
+            {
+                var removeId = TryRemove("id", id, name);
+                if(removeId)
+                {
+                    _idCount--;
+                }
+                var removeName = TryRemove("name", name, id);
+                if(removeName)
+                {
+                    _namesCount--;
+                }
+                return removeId && removeName;
+            }
+        }
+
+        private void Add<T1, T2>(string type, T1 key, T2 value)
+        {
+            var mainKey = GetKeyId(type, key, out bool isFirst);
+
+            var lockNo = GetLockNumber(mainKey);
+            var dictionary = GetCollection<T2>(type);
+            lock (dictionary[lockNo])
+            {
+                if (isFirst)
+                {
+                    dictionary[lockNo].Add(mainKey, new List<T2>() { value });
+                }
+                else
+                {
+                    var tmp = dictionary[lockNo][mainKey];
+                    tmp.Add(value);
+                    dictionary[lockNo][mainKey] = tmp;
+                }
+            }
+        }
+
+        private bool TryRemove<T1, T2>(string type, T1 key, T2 value)
+        {
+            var mainKey = GetKeyId(type, key, out bool isFirstId);
+            if (isFirstId)
+            {
+                return false;
+            }
+
+            var lockNo = GetLockNumber(mainKey);
+            var dictionary = GetCollection<T2>(type);
+            lock(dictionary[lockNo])
+            {
+                var tmpId = dictionary[lockNo][mainKey];
+
+                if (!tmpId.Contains(value))
+                {
+                    return false;
+                }
+
+                tmpId.Remove(value);
+                dictionary[lockNo][mainKey] = tmpId;
+            }
+            return true;
+        }
+
+        private long GetKeyId<T>(string type, T key, out bool isFirst)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException("key");
+            }
+
+            long resultId = 0;
+            switch (type)
+            {
+                case "id":
+                    resultId = _idGenerator.GetId(key, out isFirst);
+                    break;
+                case "name":
+                    resultId = _nameGenerator.GetId(key, out isFirst);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("type");
+            }
+            return resultId;
+        }
+
+        private Dictionary<long, List<T>> GetDictionary<T>(string type, int index)
+        {
+            var res = new Dictionary<long, List<T>>();
+            switch (type)
+            {
+                case "id":
+                    res = _idCollection[index] as Dictionary<long, List<T>>;
+                    break;
+                case "name":
+                    res = _namesCollection[index] as Dictionary<long, List<T>>;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return res;
+        }
+
+        private Dictionary<long, List<T>>[] GetCollection<T>(string type)
+        {
+            switch (type)
+            {
+                case "id":
+                    return _idCollection as Dictionary<long, List<T>>[];
+                case "name":
+                    return _namesCollection as Dictionary<long, List<T>>[];
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private int GetLockNumber(long id)
+        {
+            var lockNumber = (int)id % Constants.MaxThreadsCount;
+            return lockNumber;
         }
     }
 }
