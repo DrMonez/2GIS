@@ -78,10 +78,11 @@ namespace MyCollections
             }
             
             var mainId = _idGenerator.GetId((id, name), out bool isFirst);
-            if (!isFirst || !_keys.TryAdd(id, name))
+            if (!isFirst)
             {
                 throw new ArgumentException();
             }
+            _keys.Add(id, name);
             _values.Add(mainId, value);
         }
 
@@ -106,7 +107,7 @@ namespace MyCollections
             if(!isFirst)
             {
                 _values.Remove(key);
-                _keys.TryRemove(id, name);
+                _keys.Remove(id, name);
             }
         }
 
