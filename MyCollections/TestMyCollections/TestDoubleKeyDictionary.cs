@@ -72,7 +72,7 @@ namespace TestMyCollections
             }
             catch(Exception e)
             {
-                Assert.IsTrue(e is ArgumentOutOfRangeException);
+                Assert.IsTrue(e is ArgumentException);
             }
         }
 
@@ -343,7 +343,7 @@ namespace TestMyCollections
             }
             catch(Exception e)
             {
-                Assert.IsTrue(e is ArgumentOutOfRangeException);
+                Assert.IsTrue(e is ArgumentException);
             }
         }
 

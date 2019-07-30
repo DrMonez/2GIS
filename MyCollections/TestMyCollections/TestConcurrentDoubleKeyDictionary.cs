@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestMyCollections
@@ -37,7 +38,8 @@ namespace TestMyCollections
                  cdkd.TryAdd(i.ToString(), i, i);
              });
 
-            Assert.AreEqual(100000, cd["a"]);
+            Assert.AreEqual(100000, cd.Count);
+            Assert.AreEqual(100000, cdkd.Count);
         }
     }
 }
