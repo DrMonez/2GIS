@@ -172,7 +172,8 @@ namespace MyCollections
 
         private int GetLockNumber(long id)
         {
-            var lockNumber = (int)id % Constants.MaxThreadsCount;
+            var intNumber = (int)(id % int.MaxValue);
+            var lockNumber = intNumber % Constants.MaxThreadsCount;
             return lockNumber;
         }
     }
