@@ -52,15 +52,15 @@ namespace MyCollections
             {
                 using (_globalLocker.ReadLock())
                 {
-                    var result = new TValue[_count];
-                    var index = 0;
+                    var result = new List<TValue>();
                     foreach (var values in _values)
                     {
                         lock (values)
                         {
-                            var valuesOfDictionary = new Dictionary<long, TValue>.ValueCollection(values);
-                            valuesOfDictionary.CopyTo(result, index);
-                            index += values.Count;
+                            foreach(var key in values.Keys)
+                            {
+                                result.Add(values[key]);
+                            }
                         }
                     }
                     return result;
@@ -128,19 +128,45 @@ namespace MyCollections
 
         public bool TryGetById(TKeyId id, out Dictionary<TKeyName, TValue> result)
         {
-            using (_globalLocker.ReadLock())
+            if (id == null)
             {
-
-                throw new NotImplementedException();
+                throw new ArgumentNullException("id");
             }
+            return TryGetBy<TKeyName, TKeyId>("id", id, out result);
         }
 
         public bool TryGetByName(TKeyName name, out Dictionary<TKeyId, TValue> result)
         {
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
+            return TryGetBy<TKeyId, TKeyName>("name", name, out result);
+        }
+
+        private bool TryGetBy<T1, T2>(string type, T2 key, out Dictionary<T1, TValue> result)
+        {
+            result = new Dictionary<T1, TValue>();
             using (_globalLocker.ReadLock())
             {
-
-                throw new NotImplementedException();
+                if (!_keys.TryGetValue(type, key, out List<T1> idList))
+                {
+                    return false;
+                }
+                foreach (var id in idList)
+                {
+                    var mainKey = type == "id" ? (object)(key, id) : (object)(id, key);
+                    var currentId = _idGenerator.GetId(mainKey, out bool isFirst);
+                    if (!isFirst)
+                    {
+                        var lockNo = GetLockNumber(currentId);
+                        lock (_values[lockNo])
+                        {
+                            result.Add(id, _values[lockNo][currentId]);
+                        }
+                    }
+                }
+                return true;
             }
         }
 

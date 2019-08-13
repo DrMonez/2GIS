@@ -209,9 +209,9 @@ namespace MyCollections
 
     internal class ConcurrentKeys<TKeyId, TKeyName>
     {
-        private int _idCount = 0;
+        private int _idsCount = 0;
         private int _namesCount = 0;
-        private Dictionary<long, List<TKeyName>>[] _idCollection = new Dictionary<long, List<TKeyName>>[Constants.MaxThreadsCount];
+        private Dictionary<long, List<TKeyName>>[] _idsCollection = new Dictionary<long, List<TKeyName>>[Constants.MaxThreadsCount];
         private Dictionary<long, List<TKeyId>>[] _namesCollection = new Dictionary<long, List<TKeyId>>[Constants.MaxThreadsCount];
         private ConcurrentIDGenerator _idGenerator = new ConcurrentIDGenerator();
         private ConcurrentIDGenerator _nameGenerator = new ConcurrentIDGenerator();
@@ -224,17 +224,14 @@ namespace MyCollections
             {
                 using (_globalLocker.ReadLock())
                 {
-                    var result = new TKeyId[_idCount];
-                    var index = 0;
+                    var result = new List<TKeyId>();
                     foreach (var names in _namesCollection)
                     {
                         lock(names)
                         {
-                            var idOfPart = new Dictionary<long, List<TKeyId>>.ValueCollection(names);
-                            foreach(var idList in idOfPart)
+                            foreach(var name in names.Keys)
                             {
-                                idList.CopyTo(result, index);
-                                index += idList.Count;
+                                result.AddRange(names[name]);
                             }
                         }
                     }
@@ -249,17 +246,14 @@ namespace MyCollections
             {
                 using (_globalLocker.ReadLock())
                 {
-                    var result = new TKeyName[_namesCount];
-                    var index = 0;
-                    foreach (var id in _idCollection)
+                    var result = new List<TKeyName>();
+                    foreach (var ids in _idsCollection)
                     {
-                        lock (id)
+                        lock (ids)
                         {
-                            var namesOfPart = new Dictionary<long, List<TKeyName>>.ValueCollection(id);
-                            foreach(var namesList in namesOfPart)
+                            foreach(var id in ids.Keys)
                             {
-                                namesList.CopyTo(result, index);
-                                index += namesList.Count;
+                                result.AddRange(ids[id]);
                             }
                         }
                     }
@@ -274,7 +268,7 @@ namespace MyCollections
             {
                 for (var i = 0; i < Constants.MaxThreadsCount; i++)
                 {
-                    _idCollection[i] = new Dictionary<long, List<TKeyName>>();
+                    _idsCollection[i] = new Dictionary<long, List<TKeyName>>();
                     _namesCollection[i] = new Dictionary<long, List<TKeyId>>();
                 }
             }
@@ -315,7 +309,7 @@ namespace MyCollections
             using (_globalLocker.ReadLock())
             {
                 Add("id", id, name);
-                _idCount++;
+                _idsCount++;
                 Add("name", name, id);
                 _namesCount++;
                 return true;
@@ -328,7 +322,7 @@ namespace MyCollections
             {
                 for (var i = 0; i < Constants.MaxThreadsCount; i++)
                 {
-                    _idCollection[i].Clear();
+                    _idsCollection[i].Clear();
                     _namesCollection[i].Clear();
                 }
             }
@@ -345,7 +339,7 @@ namespace MyCollections
                 var removeId = TryRemove("id", id, name);
                 if(removeId)
                 {
-                    _idCount--;
+                    _idsCount--;
                 }
                 var removeName = TryRemove("name", name, id);
                 if(removeName)
@@ -430,7 +424,7 @@ namespace MyCollections
             switch (type)
             {
                 case "id":
-                    res = _idCollection[index] as Dictionary<long, List<T>>;
+                    res = _idsCollection[index] as Dictionary<long, List<T>>;
                     break;
                 case "name":
                     res = _namesCollection[index] as Dictionary<long, List<T>>;
@@ -446,7 +440,7 @@ namespace MyCollections
             switch (type)
             {
                 case "id":
-                    return _idCollection as Dictionary<long, List<T>>[];
+                    return _idsCollection as Dictionary<long, List<T>>[];
                 case "name":
                     return _namesCollection as Dictionary<long, List<T>>[];
                 default:
