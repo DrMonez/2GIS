@@ -133,7 +133,10 @@ namespace MyCollections
         {
             var res = new Dictionary<T1, TValue>();
 
-            if (!_keys.TryGetValue(type, key, out List<T1> idList)) return res;
+            if (!_keys.TryGetValue(type, key, out List<T1> idList))
+            {
+                return res;
+            }
             foreach (var id in idList)
             {
                 var mainKey = type == "id" ? (object)(key, id) : (object)(id, key);
