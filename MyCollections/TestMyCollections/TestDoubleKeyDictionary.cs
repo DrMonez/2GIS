@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MyCollections;
@@ -7,264 +8,337 @@ using MyCollections;
 namespace TestMyCollections
 {
     [TestClass]
-    public class TestDoubleKeyDictionary
+    public class TestDoubleKeyDictionary : ITestDoubleKeyDictionary
     {
         [TestMethod]
         public void IdKeysTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.0);
-            a.Add(1, "0", 1.0);
-            a.Add(2, "0", 2.0);
-            var actual = a.IdKeys.ToList();
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(i, actual[i]);
+            var count = 3;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+
+            var expected = new List<int>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i);
+            }
+
+            var actual = doubleKeyDictionary.IdKeys.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void NameKeysTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.0);
-            a.Add(1, "1", 1.0);
-            a.Add(2, "2", 2.0);
-            var actual = a.NameKeys.ToList();
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(i.ToString(), actual[i]);
+            var count = 3;
+            var doubleKeyDictionary = initialize<string, int, double>(count);
+
+            var expected = new List<int>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i);
+            }
+
+            var actual = doubleKeyDictionary.NameKeys.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void ValuesTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.0);
-            a.Add(1, "1", 1.0);
-            a.Add(2, "2", 2.0);
-            var actual = a.Values.ToList();
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(i, actual[i]);
+            var count = 3;
+            var doubleKeyDictionary = initialize<string, int, double>(count);
+
+            var expected = new List<double>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i);
+            }
+
+            var actual = doubleKeyDictionary.Values.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void AddTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.0);
-            Assert.AreEqual(1, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+
+            var expected = count;
+
+            var actual = doubleKeyDictionary.Count;
+            
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameTypesTest()
         {
-            var a = new DoubleKeyDictionary<int, int, double>();
-            a.Add(0, 0, 0.0);
-            Assert.AreEqual(1, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, int, double>(count);
+
+            var expected = count;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameObjectsTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.0);
-            try
-            {
-                a.Add(0, "0", 0.0);
-            }
-            catch(Exception e)
-            {
-                Assert.IsTrue(e is ArgumentException);
-            }
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            Assert.ThrowsException<ArgumentException>(() => doubleKeyDictionary.Add(0, "0", 0.0));
         }
 
         [TestMethod]
         public void AddSameIdTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Add(0, "1", 0.5);
-            a.Add(0, "2", 0.5);
-            a.Add(0, "3", 0.5);
-            Assert.AreEqual(4, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            for (var i = 1; i < 4; i++) 
+            {
+                doubleKeyDictionary.Add(0, i.ToString(), 0.5);
+            }
+
+            var expected = 4;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameNamesTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Add(1, "0", 0.5);
-            a.Add(2, "0", 0.5);
-            a.Add(3, "0", 0.5);
-            Assert.AreEqual(4, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            for (var i = 1; i < 4; i++)
+            {
+                doubleKeyDictionary.Add(i, "0", 0.5);
+            }
+
+            var expected = 4;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void GetIdTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            var expected = new Tuple<string, double>[] { new Tuple<string, double>("0", 0.5) };
-            var actual = a.GetById(0);
-            Assert.AreEqual(expected.Length, actual.Count);
-            var keys = new string[1];
-            actual.Keys.CopyTo(keys, 0);
-            var values = new double[1];
-            actual.Values.CopyTo(values, 0);
-            for (var i = 0; i < keys.Length; i++)
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+
+            var expected = new Dictionary<string, double>();
+            for(var i = 0; i < count; i++)
             {
-                Assert.AreEqual(expected[i].Item1, keys[i]);
-                Assert.AreEqual(expected[i].Item2, values[i]);
+                expected.Add(i.ToString(), i);
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetById(0);
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
+            Assert.AreEqual(expected.Count, actual.Count);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
             }
         }
 
         [TestMethod]
         public void GetSameIdTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Add(0, "1", 0.5);
-            a.Add(0, "2", 0.5);
-            a.Add(1, "3", 0.5);
-            var expected = new Dictionary<string, double>()
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            count = 3;
+            for (var i = 1; i < count; i++)
             {
-                { "0", 0.5 },
-                { "1", 0.5 },
-                { "2", 0.5 }
-            };
-            var actual = a.GetById(0);
+                doubleKeyDictionary.Add(0, i.ToString(), i);
+            }
+
+            var expected = new Dictionary<string, double>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i.ToString(), i);
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetById(0);
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new string[4];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetNameTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            var expected = new Dictionary<int, double>() { { 0, 0.5 } };
-            var actual = a.GetByName("0");
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+
+            var expected = new Dictionary<int, double>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i, i);
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetByName("0");
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new int[1];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetSameNameTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Add(1, "0", 0.5);
-            a.Add(2, "0", 0.5);
-            a.Add(3, "1", 0.5);
-            var expected = new Dictionary<int, double>()
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            count = 3;
+            for (var i = 1; i < count; i++)
             {
-                { 0, 0.5 },
-                { 1, 0.5 },
-                { 2, 0.5 }
-            };
-            var actual = a.GetByName("0");
+                doubleKeyDictionary.Add(i, "0", i);
+            }
+
+            var expected = new Dictionary<int, double>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i, i);
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetByName("0");
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new int[4];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetNullTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Remove(0, "0");
-            try
-            {
-                a.GetByName("0");
-            }
-            catch(Exception ex)
-            {
-                Assert.IsTrue(ex is KeyNotFoundException);
-            }
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            doubleKeyDictionary.Remove(0, "0");
+
+            var expected = 0;
+
+            var actual = doubleKeyDictionary.GetByName("0").Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void GetByIndexOperator()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            var expected = 0.5;
-            var actual = a[0, "0"];
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+
+            var expected = 0;
+
+            var actual = doubleKeyDictionary[0, "0"];
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void ClearTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Clear();
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            doubleKeyDictionary.Clear();
+
             var expected = 0;
-            var actual = a.Count;
+
+            var actual = doubleKeyDictionary.Count;
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void RemoveOneTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-
-            a.Remove(0, "0");
+            var count = 1;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            doubleKeyDictionary.Remove(0, "0");
 
             var expected = 0;
-            var actual = a.Count;
+
+            var actual = doubleKeyDictionary.Count;
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void RemoveTest()
         {
-            var a = new DoubleKeyDictionary<int, string, double>();
-            a.Add(0, "0", 0.5);
-            a.Add(1, "2", 0.7);
-            a.Add(1, "1", 0.6);
-            a.Add(3, "3", 0.8);
-            a.Add(4, "4", 0.9);
-
-            a.Remove(1, "1");
+            var count = 4;
+            var doubleKeyDictionary = initialize<int, string, double>(count);
+            doubleKeyDictionary.Add(1, "2", 0.7);
+            doubleKeyDictionary.Remove(1, "1");
 
             var expectedCount = 4;
-            var actualCount = a.Count;
+            var actualCount = doubleKeyDictionary.Count;
             Assert.AreEqual(expectedCount, actualCount);
 
-            var elem = a.GetByName("0");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual( 0.5, elem[0]);
-            
-            try
+            expectedCount = 2;
+            actualCount = doubleKeyDictionary.GetByName("2").Count;
+            Assert.AreEqual(expectedCount, actualCount);
+
+            expectedCount = 0;
+            actualCount = doubleKeyDictionary.GetByName("1").Count;
+            Assert.AreEqual(expectedCount, actualCount);
+        }
+
+        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> initialize<TKeyId, TKeyName, TValue>(int count)
+        {
+            var doubleKeyDictionary = new DoubleKeyDictionary<TKeyId, TKeyName, TValue>();
+            var typeId = Nullable.GetUnderlyingType(typeof(TKeyId)) ?? typeof(TKeyId);
+            var typeName = Nullable.GetUnderlyingType(typeof(TKeyName)) ?? typeof(TKeyName);
+            var typeValue = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+            for (var i = 0; i < count; i++) 
             {
-                a.GetByName("1");
+                doubleKeyDictionary.Add((TKeyId)Convert.ChangeType(i, typeId, CultureInfo.InvariantCulture), (TKeyName)Convert.ChangeType(i, typeName, CultureInfo.InvariantCulture), (TValue)Convert.ChangeType(i, typeValue, CultureInfo.InvariantCulture));
             }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is KeyNotFoundException);
-            }
-
-            elem = a.GetByName("2");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.7, elem[1]);
-
-            elem = a.GetByName("3");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.8, elem[3]);
-
-            elem = a.GetByName("4");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.9, elem[4]);
+            return doubleKeyDictionary;
         }
     }
 
@@ -272,272 +346,347 @@ namespace TestMyCollections
 
 
     [TestClass]
-    public class TestDoubleKeyDictionaryWithUserType
+    public class TestDoubleKeyDictionaryWithUserType : ITestDoubleKeyDictionary
     {
-        [TestMethod]
         public void IdKeysTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("1"), "1", 1.0);
-            a.Add(new UserType("2"), "2", 2.0);
+            var count = 3;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
 
-            var expected = new List<UserType> { new UserType("0"), new UserType("1"), new UserType("2") };
-            var actual = a.IdKeys.ToList();
-            for (var i = 0; i < actual.Count; i++)
+            var expected = new List<UserType>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(new UserType(i.ToString()));
+            }
+
+            var actual = doubleKeyDictionary.IdKeys.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
                 Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void NameKeysTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("1"), "1", 1.0);
-            a.Add(new UserType("2"), "2", 2.0);
+            var count = 3;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
 
-            var expected = new List<string> { "0", "1", "2" };
-            var actual = a.NameKeys.ToList();
-            for (var i = 0; i < actual.Count; i++)
+            var expected = new List<string>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i.ToString());
+            }
+
+            var actual = doubleKeyDictionary.NameKeys.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
                 Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void ValuesTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.0);
-            a.Add(new UserType("1"), "1", 1.0);
-            a.Add(new UserType("2"), "2", 2.0);
+            var count = 3;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
 
-            var expected = new List<double> { 0.0, 1.0, 2.0 };
-            var actual = a.Values.ToList();
-            for (var i = 0; i < actual.Count; i++)
+            var expected = new List<string>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i.ToString());
+            }
+
+            var actual = doubleKeyDictionary.Values.ToList();
+
+            for (var i = 0; i < count; i++)
+            {
                 Assert.AreEqual(expected[i], actual[i]);
+            }
         }
 
         [TestMethod]
         public void AddTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.0);
-            Assert.AreEqual(1, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+
+            var expected = count;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameTypesTest()
         {
-            var a = new DoubleKeyDictionary<UserType, UserType, double>();
-            a.Add(new UserType("0"), new UserType("0"), 0.0);
-            Assert.AreEqual(1, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, UserType, string>(count);
+
+            var expected = count;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameObjectsTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.0);
-            try
-            {
-                a.Add(new UserType("0"), "0", 0.0);
-            }
-            catch(Exception e)
-            {
-                Assert.IsTrue(e is ArgumentException);
-            }
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            Assert.ThrowsException<ArgumentException>(() => doubleKeyDictionary.Add(new UserType("0"), "0", "0"));
         }
 
         [TestMethod]
         public void AddSameIdTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Add(new UserType("0"), "1", 0.5);
-            a.Add(new UserType("0"), "2", 0.5);
-            a.Add(new UserType("0"), "3", 0.5);
-            Assert.AreEqual(4, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            for (var i = 1; i < 4; i++)
+            {
+                doubleKeyDictionary.Add(new UserType("0"), i.ToString(), i.ToString());
+            }
+
+            var expected = 4;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void AddSameNamesTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Add(new UserType("1"), "0", 0.5);
-            a.Add(new UserType("2"), "0", 0.5);
-            a.Add(new UserType("3"), "0", 0.5);
-            Assert.AreEqual(4, a.Count);
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            for (var i = 1; i < 4; i++)
+            {
+                doubleKeyDictionary.Add(new UserType(i.ToString()), "0", i.ToString());
+            }
+
+            var expected = 4;
+
+            var actual = doubleKeyDictionary.Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void GetIdTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            var expected = new Tuple<string, double>[] { new Tuple<string, double>("0", 0.5) };
-            var actual = a.GetById(new UserType("0"));
-            Assert.AreEqual(expected.Length, actual.Count);
-            var keys = new string[1];
-            actual.Keys.CopyTo(keys, 0);
-            var values = new double[1];
-            actual.Values.CopyTo(values, 0);
-            for (var i = 0; i < keys.Length; i++)
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+
+            var expected = new Dictionary<string, string>();
+            for (var i = 0; i < count; i++)
             {
-                Assert.AreEqual(expected[i].Item1, keys[i]);
-                Assert.AreEqual(expected[i].Item2, values[i]);
+                expected.Add(i.ToString(), i.ToString());
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetById(new UserType("0"));
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
+            Assert.AreEqual(expected.Count, actual.Count);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
             }
         }
 
         [TestMethod]
         public void GetSameIdTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Add(new UserType("0"), "1", 0.5);
-            a.Add(new UserType("0"), "2", 0.5);
-            a.Add(new UserType("0"), "3", 0.5);
-            var expected = new Dictionary<string, double>()
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            count = 3;
+            for (var i = 1; i < count; i++)
             {
-                { "0", 0.5 },
-                { "1", 0.5 },
-                { "2", 0.5 },
-                { "3", 0.5 }
-            };
-            var actual = a.GetById(new UserType("0"));
+                doubleKeyDictionary.Add(new UserType("0"), i.ToString(), i.ToString());
+            }
+
+            var expected = new Dictionary<string, string>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(i.ToString(), i.ToString());
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetById(new UserType("0"));
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new string[4];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetNameTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            var expected = new Dictionary<UserType, double>() { { new UserType("0"), 0.5 } };
-            var actual = a.GetByName("0");
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+
+            var expected = new Dictionary<UserType, string>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(new UserType(i.ToString()), i.ToString());
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetByName("0");
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new UserType[1];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetSameNameTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Add(new UserType("1"), "0", 0.5);
-            a.Add(new UserType("2"), "0", 0.5);
-            a.Add(new UserType("3"), "0", 0.5);
-            var expected = new Dictionary<UserType, double>()
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            count = 3;
+            for (var i = 1; i < count; i++)
             {
-                { new UserType("0"), 0.5 },
-                { new UserType("1"), 0.5 },
-                { new UserType("2"), 0.5 },
-                { new UserType("3"), 0.5 }
-            };
-            var actual = a.GetByName("0");
+                doubleKeyDictionary.Add(new UserType(i.ToString()), "0", i.ToString());
+            }
+
+            var expected = new Dictionary<UserType, string>();
+            for (var i = 0; i < count; i++)
+            {
+                expected.Add(new UserType(i.ToString()), i.ToString());
+            }
+            var expectedKeys = expected.Keys.ToList();
+            var expectedValues = expected.Values.ToList();
+
+            var actual = doubleKeyDictionary.GetByName("0");
+            var actualKeys = actual.Keys.ToList();
+            var actualValues = actual.Values.ToList();
+
             Assert.AreEqual(expected.Count, actual.Count);
-            var keys = new UserType[4];
-            actual.Keys.CopyTo(keys, 0);
-            for (var i = 0; i < actual.Count; i++)
-                Assert.AreEqual(expected[keys[i]], actual[keys[i]]);
+            for (var i = 0; i < count; i++)
+            {
+                Assert.AreEqual(expectedKeys[i], actualKeys[i]);
+                Assert.AreEqual(expectedValues[i], actualValues[i]);
+            }
         }
 
         [TestMethod]
         public void GetNullTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Remove(new UserType("0"), "0");
-            try
-            {
-                a.GetByName("0");
-            }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is KeyNotFoundException);
-            }
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            doubleKeyDictionary.Remove(new UserType("0"), "0");
+
+            var expected = 0;
+
+            var actual = doubleKeyDictionary.GetByName("0").Count;
+
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void GetByIndexOperator()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            var expected = 0.5;
-            var actual = a[new UserType("0"), "0"];
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+
+            var expected = "0";
+
+            var actual = doubleKeyDictionary[new UserType("0"), "0"];
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void ClearTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Clear();
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            doubleKeyDictionary.Clear();
+
             var expected = 0;
-            var actual = a.Count;
+
+            var actual = doubleKeyDictionary.Count;
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void RemoveOneTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-
-            a.Remove(new UserType("0"), "0");
+            var count = 1;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            doubleKeyDictionary.Remove(new UserType("0"), "0");
 
             var expected = 0;
-            var actual = a.Count;
+
+            var actual = doubleKeyDictionary.Count;
+
             Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]
         public void RemoveTest()
         {
-            var a = new DoubleKeyDictionary<UserType, string, double>();
-            a.Add(new UserType("0"), "0", 0.5);
-            a.Add(new UserType("1"), "2", 0.7);
-            a.Add(new UserType("1"), "1", 0.6);
-            a.Add(new UserType("3"), "3", 0.8);
-            a.Add(new UserType("4"), "4", 0.9);
-
-            a.Remove(new UserType("1"), "1");
+            var count = 4;
+            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            doubleKeyDictionary.Add(new UserType("1"), "2", "0.7");
+            doubleKeyDictionary.Remove(new UserType("1"), "1");
 
             var expectedCount = 4;
-            var actualCount = a.Count;
+            var actualCount = doubleKeyDictionary.Count;
             Assert.AreEqual(expectedCount, actualCount);
 
-            var elem = a.GetByName("0");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.5, elem[new UserType("0")]);
+            expectedCount = 2;
+            actualCount = doubleKeyDictionary.GetByName("2").Count;
+            Assert.AreEqual(expectedCount, actualCount);
 
-            try
+            expectedCount = 0;
+            actualCount = doubleKeyDictionary.GetByName("1").Count;
+            Assert.AreEqual(expectedCount, actualCount);
+        }
+
+        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> initialize<TKeyId, TKeyName, TValue>(int count)   where TKeyId : class 
+                                                                                                                where TKeyName : class
+                                                                                                                where TValue : class
+        {
+            var doubleKeyDictionary = new DoubleKeyDictionary<TKeyId, TKeyName, TValue>();
+
+            var typeId = Nullable.GetUnderlyingType(typeof(TKeyId)) ?? typeof(TKeyId);
+            var typeName = Nullable.GetUnderlyingType(typeof(TKeyName)) ?? typeof(TKeyName);
+            var typeValue = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+
+            var idIsUserType = typeId == typeof(UserType);
+            var nameIsUserType = typeName == typeof(UserType);
+            var valueIsUserType = typeValue == typeof(UserType);
+
+            for (var i = 0; i < count; i++)
             {
-                a.GetByName("1");
+                var id = idIsUserType ? new UserType(i.ToString()) as TKeyId : (TKeyId)Convert.ChangeType(i, typeId, CultureInfo.InvariantCulture);
+                var name = nameIsUserType ? new UserType(i.ToString()) as TKeyName : (TKeyName)Convert.ChangeType(i, typeName, CultureInfo.InvariantCulture);
+                var value = valueIsUserType ? new UserType(i.ToString()) as TValue : (TValue)Convert.ChangeType(i, typeValue, CultureInfo.InvariantCulture);
+                doubleKeyDictionary.Add(id, name, value);
             }
-            catch (Exception ex)
-            {
-                Assert.IsTrue(ex is KeyNotFoundException);
-            }
-
-            elem = a.GetByName("2");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.7, elem[new UserType("1")]);
-
-            elem = a.GetByName("3");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.8, elem[new UserType("3")]);
-
-            elem = a.GetByName("4");
-            Assert.AreEqual(1, elem.Count);
-            Assert.AreEqual(0.9, elem[new UserType("4")]);
+            return doubleKeyDictionary;
         }
 
         public class UserType : IEquatable<UserType>
