@@ -108,6 +108,7 @@ namespace MyCollections
             {
                 _values.Remove(key);
                 _keys.Remove(id, name);
+                _idGenerator.Remove((id, name));
             }
         }
 

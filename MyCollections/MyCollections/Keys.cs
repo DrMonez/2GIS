@@ -151,7 +151,14 @@ namespace MyCollections
             }
 
             tmpId.Remove(value);
-            dictionary[mainKey] = tmpId;
+            if (tmpId.Count == 0)
+            {
+                RemoveFromGenerator(type, key);
+            }
+            else
+            {
+                dictionary[mainKey] = tmpId;
+            }
         }
 
         private long GetKeyId<T>(string type, T key, out bool isFirst)
@@ -203,6 +210,26 @@ namespace MyCollections
                     return _namesCollection as Dictionary<long, List<T>>;
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private void RemoveFromGenerator<T>(string type, T key)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException("key");
+            }
+            
+            switch (type)
+            {
+                case "id":
+                    _idGenerator.Remove(key);
+                    break;
+                case "name":
+                    _nameGenerator.Remove(key);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("type");
             }
         }
     }
