@@ -21,7 +21,6 @@ namespace TestMyCollections
         void GetNameTest();
         void GetSameNameTest();
         void GetNullTest();
-        void GetByIndexOperator();
         void ClearTest();
         void RemoveOneTest();
         void RemoveTest();
