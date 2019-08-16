@@ -7,7 +7,7 @@ namespace MyCollections
     {
         private Keys<TKeyId, TKeyName> _keys;
         private Dictionary<long, TValue> _values;
-        private IDGenerator _idGenerator = new IDGenerator(); 
+        private IDGenerator<(TKeyId,TKeyName)> _idGenerator = new IDGenerator<(TKeyId, TKeyName)>(); 
 
         public int Count => _values.Count;
 
@@ -141,7 +141,7 @@ namespace MyCollections
             foreach (var id in idList)
             {
                 var mainKey = type == "id" ? (object)(key, id) : (object)(id, key);
-                var currentId = _idGenerator.GetId(mainKey, out bool isFirst);
+                var currentId = _idGenerator.GetId(((TKeyId,TKeyName))mainKey, out bool isFirst);
                 if (!isFirst) res.Add(id, _values[currentId]);
             }
             return res;
