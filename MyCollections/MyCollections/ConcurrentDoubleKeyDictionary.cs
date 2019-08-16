@@ -10,7 +10,7 @@ namespace MyCollections
         private int _count = 0;
         private ConcurrentKeys<TKeyId, TKeyName> _keys;
         private Dictionary<long, TValue>[] _values = new Dictionary<long, TValue> [Constants.MaxThreadsCount];
-        private ConcurrentIDGenerator _idGenerator = new ConcurrentIDGenerator();
+        private ConcurrentIDGenerator<(TKeyId, TKeyName)> _idGenerator = new ConcurrentIDGenerator<(TKeyId, TKeyName)>();
         private RWLock _globalLocker = new RWLock();
 
         public int Count
@@ -72,6 +72,7 @@ namespace MyCollections
         {
             using (_globalLocker.WriteLock())
             {
+                _count = 0;
                 _keys.Clear();
                 foreach(var values in _values)
                 {
@@ -156,7 +157,7 @@ namespace MyCollections
                 foreach (var id in idList)
                 {
                     var mainKey = type == "id" ? (object)(key, id) : (object)(id, key);
-                    var currentId = _idGenerator.GetId(mainKey, out bool isFirst);
+                    var currentId = _idGenerator.GetId(((TKeyId,TKeyName))mainKey, out bool isFirst);
                     if (!isFirst)
                     {
                         var lockNo = GetLockNumber(currentId);
@@ -187,11 +188,15 @@ namespace MyCollections
                 if (isFirst) return false;
 
                 var lockNo = GetLockNumber(key);
-                lock(_values[lockNo])
+                lock (_values[lockNo])
                 {
                     _values[lockNo].Remove(key);
                     _keys.TryRemove(id, name);
                 }
+            }
+            using (_globalLocker.WriteLock())
+            {
+                _count--;
                 return true;
             }
         }
