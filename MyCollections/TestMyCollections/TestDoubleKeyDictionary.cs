@@ -14,7 +14,7 @@ namespace TestMyCollections
         public void IdKeysTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
 
             var expected = new List<int>();
             for (var i = 0; i < count; i++)
@@ -34,7 +34,7 @@ namespace TestMyCollections
         public void NameKeysTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<string, int, double>(count);
+            var doubleKeyDictionary = Initialize<string, int, double>(count);
 
             var expected = new List<int>();
             for (var i = 0; i < count; i++)
@@ -54,7 +54,7 @@ namespace TestMyCollections
         public void ValuesTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<string, int, double>(count);
+            var doubleKeyDictionary = Initialize<string, int, double>(count);
 
             var expected = new List<double>();
             for (var i = 0; i < count; i++)
@@ -74,7 +74,7 @@ namespace TestMyCollections
         public void AddTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
 
             var expected = count;
 
@@ -87,7 +87,7 @@ namespace TestMyCollections
         public void AddSameTypesTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, int, double>(count);
+            var doubleKeyDictionary = Initialize<int, int, double>(count);
 
             var expected = count;
 
@@ -100,7 +100,7 @@ namespace TestMyCollections
         public void AddSameObjectsTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             Assert.ThrowsException<ArgumentException>(() => doubleKeyDictionary.Add(0, "0", 0.0));
         }
 
@@ -108,7 +108,7 @@ namespace TestMyCollections
         public void AddSameIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             for (var i = 1; i < 4; i++) 
             {
                 doubleKeyDictionary.Add(0, i.ToString(), 0.5);
@@ -125,7 +125,7 @@ namespace TestMyCollections
         public void AddSameNamesTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             for (var i = 1; i < 4; i++)
             {
                 doubleKeyDictionary.Add(i, "0", 0.5);
@@ -142,7 +142,7 @@ namespace TestMyCollections
         public void GetIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
 
             var expected = new Dictionary<string, double>();
             for(var i = 0; i < count; i++)
@@ -168,7 +168,7 @@ namespace TestMyCollections
         public void GetSameIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             count = 3;
             for (var i = 1; i < count; i++)
             {
@@ -199,7 +199,7 @@ namespace TestMyCollections
         public void GetNameTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
 
             var expected = new Dictionary<int, double>();
             for (var i = 0; i < count; i++)
@@ -225,7 +225,7 @@ namespace TestMyCollections
         public void GetSameNameTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             count = 3;
             for (var i = 1; i < count; i++)
             {
@@ -256,7 +256,7 @@ namespace TestMyCollections
         public void GetNullTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             doubleKeyDictionary.Remove(0, "0");
 
             var expected = 0;
@@ -270,7 +270,7 @@ namespace TestMyCollections
         public void GetByIndexOperator()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
 
             var expected = 0;
 
@@ -283,7 +283,7 @@ namespace TestMyCollections
         public void ClearTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             doubleKeyDictionary.Clear();
 
             var expected = 0;
@@ -297,7 +297,7 @@ namespace TestMyCollections
         public void RemoveOneTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             doubleKeyDictionary.Remove(0, "0");
 
             var expected = 0;
@@ -311,7 +311,7 @@ namespace TestMyCollections
         public void RemoveTest()
         {
             var count = 4;
-            var doubleKeyDictionary = initialize<int, string, double>(count);
+            var doubleKeyDictionary = Initialize<int, string, double>(count);
             doubleKeyDictionary.Add(1, "2", 0.7);
             doubleKeyDictionary.Remove(1, "1");
 
@@ -328,7 +328,7 @@ namespace TestMyCollections
             Assert.AreEqual(expectedCount, actualCount);
         }
 
-        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> initialize<TKeyId, TKeyName, TValue>(int count)
+        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> Initialize<TKeyId, TKeyName, TValue>(int count)
         {
             var doubleKeyDictionary = new DoubleKeyDictionary<TKeyId, TKeyName, TValue>();
             var typeId = Nullable.GetUnderlyingType(typeof(TKeyId)) ?? typeof(TKeyId);
@@ -348,10 +348,11 @@ namespace TestMyCollections
     [TestClass]
     public class TestDoubleKeyDictionaryWithUserType : ITestDoubleKeyDictionary
     {
+        [TestMethod]
         public void IdKeysTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = new List<UserType>();
             for (var i = 0; i < count; i++)
@@ -371,7 +372,7 @@ namespace TestMyCollections
         public void NameKeysTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = new List<string>();
             for (var i = 0; i < count; i++)
@@ -391,7 +392,7 @@ namespace TestMyCollections
         public void ValuesTest()
         {
             var count = 3;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = new List<string>();
             for (var i = 0; i < count; i++)
@@ -411,7 +412,7 @@ namespace TestMyCollections
         public void AddTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = count;
 
@@ -424,7 +425,7 @@ namespace TestMyCollections
         public void AddSameTypesTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, UserType, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, UserType, string>(count);
 
             var expected = count;
 
@@ -437,7 +438,7 @@ namespace TestMyCollections
         public void AddSameObjectsTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             Assert.ThrowsException<ArgumentException>(() => doubleKeyDictionary.Add(new UserType("0"), "0", "0"));
         }
 
@@ -445,7 +446,7 @@ namespace TestMyCollections
         public void AddSameIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             for (var i = 1; i < 4; i++)
             {
                 doubleKeyDictionary.Add(new UserType("0"), i.ToString(), i.ToString());
@@ -462,7 +463,7 @@ namespace TestMyCollections
         public void AddSameNamesTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             for (var i = 1; i < 4; i++)
             {
                 doubleKeyDictionary.Add(new UserType(i.ToString()), "0", i.ToString());
@@ -479,7 +480,7 @@ namespace TestMyCollections
         public void GetIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = new Dictionary<string, string>();
             for (var i = 0; i < count; i++)
@@ -505,7 +506,7 @@ namespace TestMyCollections
         public void GetSameIdTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             count = 3;
             for (var i = 1; i < count; i++)
             {
@@ -536,7 +537,7 @@ namespace TestMyCollections
         public void GetNameTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = new Dictionary<UserType, string>();
             for (var i = 0; i < count; i++)
@@ -562,7 +563,7 @@ namespace TestMyCollections
         public void GetSameNameTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             count = 3;
             for (var i = 1; i < count; i++)
             {
@@ -593,7 +594,7 @@ namespace TestMyCollections
         public void GetNullTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             doubleKeyDictionary.Remove(new UserType("0"), "0");
 
             var expected = 0;
@@ -607,7 +608,7 @@ namespace TestMyCollections
         public void GetByIndexOperator()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
 
             var expected = "0";
 
@@ -620,7 +621,7 @@ namespace TestMyCollections
         public void ClearTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             doubleKeyDictionary.Clear();
 
             var expected = 0;
@@ -634,7 +635,7 @@ namespace TestMyCollections
         public void RemoveOneTest()
         {
             var count = 1;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             doubleKeyDictionary.Remove(new UserType("0"), "0");
 
             var expected = 0;
@@ -648,7 +649,7 @@ namespace TestMyCollections
         public void RemoveTest()
         {
             var count = 4;
-            var doubleKeyDictionary = initialize<UserType, string, string>(count);
+            var doubleKeyDictionary = Initialize<UserType, string, string>(count);
             doubleKeyDictionary.Add(new UserType("1"), "2", "0.7");
             doubleKeyDictionary.Remove(new UserType("1"), "1");
 
@@ -665,7 +666,7 @@ namespace TestMyCollections
             Assert.AreEqual(expectedCount, actualCount);
         }
 
-        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> initialize<TKeyId, TKeyName, TValue>(int count)   where TKeyId : class 
+        private DoubleKeyDictionary<TKeyId, TKeyName, TValue> Initialize<TKeyId, TKeyName, TValue>(int count)   where TKeyId : class 
                                                                                                                 where TKeyName : class
                                                                                                                 where TValue : class
         {
