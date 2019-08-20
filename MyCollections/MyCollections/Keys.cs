@@ -29,12 +29,12 @@ namespace MyCollections
         {
             get
             {
-                var res = new List<TKeyName>();
+                var result = new List<TKeyName>();
                 foreach (var key in _idCollection.Keys)
                 {
-                    res.AddRange(_idCollection[key]);
+                    result.AddRange(_idCollection[key]);
                 }
-                return res.Distinct().ToList();
+                return result.Distinct().ToList();
             }
         }
 
@@ -50,9 +50,6 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("name");
             }
-
-            _idCollection = new Dictionary<long, List<TKeyName>>();
-            _namesCollection = new Dictionary<long, List<TKeyId>>();
 
             var keyId = GetKeyId("id", id, out bool isFirstId);
             var keyName = GetKeyId("name", name, out bool isFirstName);
@@ -128,9 +125,9 @@ namespace MyCollections
             }
             else
             {
-                var tmp = dictionary[mainKey];
-                tmp.Add(value);
-                dictionary[mainKey] = tmp;
+                var valueCollection = dictionary[mainKey];
+                valueCollection.Add(value);
+                dictionary[mainKey] = valueCollection;
             }
         }
 
@@ -143,21 +140,21 @@ namespace MyCollections
             }
 
             var dictionary = GetCollection<T2>(type);
-            var tmpId = dictionary[mainKey];
+            var valueCollection = dictionary[mainKey];
 
-            if (!tmpId.Contains(value))
+            if (!valueCollection.Contains(value))
             {
                 throw new KeyNotFoundException("key");
             }
 
-            tmpId.Remove(value);
-            if (tmpId.Count == 0)
+            valueCollection.Remove(value);
+            if (valueCollection.Count == 0)
             {
                 RemoveFromGenerator(type, key);
             }
             else
             {
-                dictionary[mainKey] = tmpId;
+                dictionary[mainKey] = valueCollection;
             }
         }
 
@@ -186,19 +183,19 @@ namespace MyCollections
 
         private List<T> GetDictionary<T>(string type, long key)
         {
-            var res = new List<T>();
+            var result = new List<T>();
             switch (type)
             {
                 case "id":
-                    res = _idCollection[key] as List<T>;
+                    result = _idCollection[key] as List<T>;
                     break;
                 case "name":
-                    res = _namesCollection[key] as List<T>;
+                    result = _namesCollection[key] as List<T>;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            return res;
+            return result;
         }
 
         private Dictionary<long, List<T>> GetCollection<T>(string type)

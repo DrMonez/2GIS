@@ -107,8 +107,11 @@ namespace MyCollections
             using (_globalLocker.ReadLock())
             {
                 Add("id", id, name);
-                _idsCount++;
                 Add("name", name, id);
+            }
+            using (_globalLocker.WriteLock())
+            {
+                _idsCount++;
                 _namesCount++;
                 return true;
             }
@@ -134,14 +137,18 @@ namespace MyCollections
             {
                 return false;
             }
+            bool removeId, removeName;
             using (_globalLocker.ReadLock())
             {
-                var removeId = TryRemove("id", id, name);
+                removeId = TryRemove("id", id, name);
+                removeName = TryRemove("name", name, id);
+            }
+            using (_globalLocker.WriteLock())
+            {
                 if (removeId)
                 {
                     _idsCount--;
                 }
-                var removeName = TryRemove("name", name, id);
                 if (removeName)
                 {
                     _namesCount--;
@@ -164,9 +171,9 @@ namespace MyCollections
                 }
                 else
                 {
-                    var tmp = dictionary[lockNo][mainKey];
-                    tmp.Add(value);
-                    dictionary[lockNo][mainKey] = tmp;
+                    var valueCollection = dictionary[lockNo][mainKey];
+                    valueCollection.Add(value);
+                    dictionary[lockNo][mainKey] = valueCollection;
                 }
             }
         }
@@ -183,15 +190,15 @@ namespace MyCollections
             var dictionary = GetCollection<T2>(type);
             lock (dictionary[lockNo])
             {
-                var tmpId = dictionary[lockNo][mainKey];
+                var valueCollection = dictionary[lockNo][mainKey];
 
-                if (!tmpId.Contains(value))
+                if (!valueCollection.Contains(value))
                 {
                     return false;
                 }
 
-                tmpId.Remove(value);
-                dictionary[lockNo][mainKey] = tmpId;
+                valueCollection.Remove(value);
+                dictionary[lockNo][mainKey] = valueCollection;
             }
             return true;
         }

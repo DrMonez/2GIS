@@ -5,8 +5,8 @@ namespace MyCollections
 {
     public class DoubleKeyDictionary<TKeyId, TKeyName, TValue> : IDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
-        private Keys<TKeyId, TKeyName> _keys;
-        private Dictionary<long, TValue> _values;
+        private Keys<TKeyId, TKeyName> _keys = new Keys<TKeyId, TKeyName>();
+        private Dictionary<long, TValue> _values = new Dictionary<long, TValue>();
         private IDGenerator<(TKeyId,TKeyName)> _idGenerator = new IDGenerator<(TKeyId, TKeyName)>(); 
 
         public int Count => _values.Count;
@@ -42,11 +42,7 @@ namespace MyCollections
             }
         }
 
-        public DoubleKeyDictionary()
-        {
-            _values = new Dictionary<long, TValue>();
-            _keys = new Keys<TKeyId, TKeyName>();
-        }
+        public DoubleKeyDictionary() { }
 
         public DoubleKeyDictionary(TKeyId id, TKeyName name, TValue value)
         {
@@ -58,9 +54,6 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("name");
             }
-
-            _values = new Dictionary<long, TValue>();
-            _keys = new Keys<TKeyId, TKeyName>(id, name);
 
             var key = _idGenerator.GetId((id, name), out bool isFirst);
             _values.Add(key, value);

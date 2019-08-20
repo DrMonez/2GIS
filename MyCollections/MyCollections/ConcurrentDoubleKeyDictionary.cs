@@ -8,7 +8,7 @@ namespace MyCollections
     public class ConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue> : IConcurrentDoubleKeyDictionary<TKeyId, TKeyName, TValue>
     {
         private int _count = 0;
-        private ConcurrentKeys<TKeyId, TKeyName> _keys;
+        private ConcurrentKeys<TKeyId, TKeyName> _keys = new ConcurrentKeys<TKeyId, TKeyName>();
         private Dictionary<long, TValue>[] _values = new Dictionary<long, TValue> [Constants.MaxThreadsCount];
         private ConcurrentIDGenerator<(TKeyId, TKeyName)> _idGenerator = new ConcurrentIDGenerator<(TKeyId, TKeyName)>();
         private RWLock _globalLocker = new RWLock();
@@ -83,7 +83,6 @@ namespace MyCollections
 
         public ConcurrentDoubleKeyDictionary()
         {
-            _keys = new ConcurrentKeys<TKeyId, TKeyName>();
             for (var i = 0; i < Constants.MaxThreadsCount; i++)
             {
                 _values[i] = new Dictionary<long, TValue>();
@@ -121,9 +120,12 @@ namespace MyCollections
                     {
                         _values[lockNo].Add(mainId, value);
                     }
-                    _count++;
-                    return true;
                 }
+            }
+            using (_globalLocker.WriteLock())
+            {
+                _count++;
+                return true;
             }
         }
 
