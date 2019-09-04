@@ -7,24 +7,24 @@ namespace MyCollections
     {
         public struct WriteLockToken : IDisposable
         {
-            private readonly ReaderWriterLockSlim @lock;
-            public WriteLockToken(ReaderWriterLockSlim @lock)
+            private readonly ReaderWriterLockSlim _lock;
+            public WriteLockToken(ReaderWriterLockSlim writeLock)
             {
-                this.@lock = @lock;
-                @lock.EnterWriteLock();
+                this._lock = writeLock;
+                writeLock.EnterWriteLock();
             }
-            public void Dispose() => @lock.ExitWriteLock();
+            public void Dispose() => _lock.ExitWriteLock();
         }
 
         public struct ReadLockToken : IDisposable
         {
-            private readonly ReaderWriterLockSlim @lock;
-            public ReadLockToken(ReaderWriterLockSlim @lock)
+            private readonly ReaderWriterLockSlim _lock;
+            public ReadLockToken(ReaderWriterLockSlim readLock)
             {
-                this.@lock = @lock;
-                @lock.EnterReadLock();
+                this._lock = readLock;
+                readLock.EnterReadLock();
             }
-            public void Dispose() => @lock.ExitReadLock();
+            public void Dispose() => _lock.ExitReadLock();
         }
 
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
