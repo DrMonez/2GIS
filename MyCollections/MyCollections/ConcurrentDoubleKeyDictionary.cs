@@ -193,8 +193,9 @@ namespace MyCollections
                 lock (_values[lockNo])
                 {
                     _values[lockNo].Remove(key);
-                    _keys.TryRemove(id, name);
                 }
+                _keys.TryRemove(id, name);
+                _idGenerator.Remove((id, name));
             }
             using (_globalLocker.WriteLock())
             {

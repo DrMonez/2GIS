@@ -198,9 +198,27 @@ namespace MyCollections
                 }
 
                 valueCollection.Remove(value);
-                dictionary[lockNo][mainKey] = valueCollection;
+                if (valueCollection.Count == 0)
+                {
+                    RemoveFromGenerator(type, key);
+                }
+                else
+                {
+                    dictionary[lockNo][mainKey] = valueCollection;
+                }
+               
             }
             return true;
+        }
+
+        private void RemoveFromGenerator<T>(string type, T key)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException("key");
+            }
+            var generator = GetIDGenerator<T>(type);
+            generator.Remove(key);
         }
 
         private long GetKeyId<T>(string type, T key, out bool isFirst)
@@ -209,20 +227,8 @@ namespace MyCollections
             {
                 throw new ArgumentNullException("key");
             }
-
-            var generatorKey = (object)key;
-            long resultId = 0;
-            switch (type)
-            {
-                case "id":
-                    resultId = _idGenerator.GetId((TKeyId)generatorKey, out isFirst);
-                    break;
-                case "name":
-                    resultId = _nameGenerator.GetId((TKeyName)generatorKey, out isFirst);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type");
-            }
+            var generator = GetIDGenerator<T>(type);
+            var resultId = generator.GetId(key, out isFirst);
             return resultId;
         }
 
@@ -253,6 +259,19 @@ namespace MyCollections
                     return _namesCollection as Dictionary<long, List<T>>[];
                 default:
                     throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private ConcurrentIDGenerator<T> GetIDGenerator<T>(string type)
+        {
+            switch (type)
+            {
+                case "id":
+                    return _idGenerator as ConcurrentIDGenerator<T>;
+                case "name":
+                    return _nameGenerator as ConcurrentIDGenerator<T>;
+                default:
+                    throw new ArgumentOutOfRangeException("type");
             }
         }
 

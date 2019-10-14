@@ -165,37 +165,22 @@ namespace MyCollections
                 throw new ArgumentNullException("key");
             }
 
-            var generatorKey = (object)key;
-            long resultId = 0;
-            switch (type)
-            {
-                case "id":
-                    resultId = _idGenerator.GetId((TKeyId)generatorKey, out isFirst);
-                    break;
-                case "name":
-                    resultId = _nameGenerator.GetId((TKeyName)generatorKey, out isFirst);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type");
-            }
+            var generator = GetIDGenerator<T>(type);
+            var resultId = generator.GetId(key, out isFirst);
             return resultId;
         }
 
         private List<T> GetDictionary<T>(string type, long key)
         {
-            var result = new List<T>();
             switch (type)
             {
                 case "id":
-                    result = _idCollection[key] as List<T>;
-                    break;
+                    return _idCollection[key] as List<T>;
                 case "name":
-                    result = _namesCollection[key] as List<T>;
-                    break;
+                    return _namesCollection[key] as List<T>;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            return result;
         }
 
         private Dictionary<long, List<T>> GetCollection<T>(string type)
@@ -211,25 +196,27 @@ namespace MyCollections
             }
         }
 
+        private IDGenerator<T> GetIDGenerator<T>(string type)
+        {
+            switch (type)
+            {
+                case "id":
+                    return _idGenerator as IDGenerator<T>;
+                case "name":
+                    return _nameGenerator as IDGenerator<T>;
+                default:
+                    throw new ArgumentOutOfRangeException("type");
+            }
+        }
+
         private void RemoveFromGenerator<T>(string type, T key)
         {
             if (key == null)
             {
                 throw new ArgumentNullException("key");
             }
-
-            var generatorKey = (object)key;
-            switch (type)
-            {
-                case "id":
-                    _idGenerator.Remove((TKeyId)generatorKey);
-                    break;
-                case "name":
-                    _nameGenerator.Remove((TKeyName)generatorKey);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("type");
-            }
+            var generator = GetIDGenerator<T>(type);
+            generator.Remove(key);
         }
     }
 }

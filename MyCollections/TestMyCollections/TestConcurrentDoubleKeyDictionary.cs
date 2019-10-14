@@ -285,7 +285,7 @@ namespace TestMyCollections
 
             var expected = 0;
 
-            Assert.IsTrue(concurrentDoubleKeyDictionary.TryGetByName("0", out var actualDictionary));
+            Assert.IsTrue(!concurrentDoubleKeyDictionary.TryGetByName("0", out var actualDictionary));
             var actual = actualDictionary.Count;
 
             Assert.AreEqual(expected, actual);
@@ -333,6 +333,22 @@ namespace TestMyCollections
 
             var expected = count;
             var actual = concurrentDoubleKeyDictionary.Count;
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void RemoveAddTest()
+        {
+            var count = 10;
+            var concurrentDoubleKeyDictionary = Initialize<string, int, double>(count);
+
+            concurrentDoubleKeyDictionary.TryRemove("0", 0);
+            concurrentDoubleKeyDictionary.TryAdd("0", 0, 0);
+
+            var expected = count;
+
+            var actual = concurrentDoubleKeyDictionary.Count;
+
             Assert.AreEqual(expected, actual);
         }
 
